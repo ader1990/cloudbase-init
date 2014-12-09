@@ -116,27 +116,24 @@ class SetUserPasswordPluginTests(unittest.TestCase):
     def test_set_metadata_password_no_ssh_key(self):
         self._test_set_metadata_password(ssh_pub_key=None)
 
-    @mock.patch('cloudbaseinit.plugins.windows.setuserpassword.'
-                'SetUserPasswordPlugin._get_password')
-    def test_set_password(self, mock_get_password):
-        mock_service = mock.MagicMock()
+    def test_set_password(self):
         mock_osutils = mock.MagicMock()
-        mock_get_password.return_value = 'fake password'
-        response = self._setpassword_plugin._set_password(mock_service,
-                                                          mock_osutils,
-                                                          'fake user')
-        mock_get_password.assert_called_once_with(mock_service, mock_osutils)
-        mock_osutils.set_user_password.assert_called_once_with('fake user',
-                                                               'fake password')
-        self.assertEqual(response, 'fake password')
+        fake_user = 'fake_user'
+        fake_password = 'fake_password'
+        self._setpassword_plugin._set_password(mock_osutils, fake_password,
+                                               fake_user)
+        mock_osutils.set_user_password.assert_called_once_with(fake_user,
+                                                               fake_password)
 
     @mock.patch('cloudbaseinit.plugins.windows.setuserpassword.'
                 'SetUserPasswordPlugin._set_password')
     @mock.patch('cloudbaseinit.plugins.windows.setuserpassword.'
+                'SetUserPasswordPlugin._get_password')
+    @mock.patch('cloudbaseinit.plugins.windows.setuserpassword.'
                 'SetUserPasswordPlugin._set_metadata_password')
     @mock.patch('cloudbaseinit.osutils.factory.get_os_utils')
     def test_execute(self, mock_get_os_utils, mock_set_metadata_password,
-                     mock_set_password):
+                     mock_get_password, mock_set_password):
         mock_service = mock.MagicMock()
         mock_osutils = mock.MagicMock()
         fake_shared_data = mock.MagicMock()
@@ -145,15 +142,17 @@ class SetUserPasswordPluginTests(unittest.TestCase):
         mock_service.can_post_password = True
         mock_get_os_utils.return_value = mock_osutils
         mock_osutils.user_exists.return_value = True
-        mock_set_password.return_value = 'fake password'
+        mock_get_password.return_value = 'fake password'
         response = self._setpassword_plugin.execute(mock_service,
                                                     fake_shared_data)
         mock_get_os_utils.assert_called_once_with()
         fake_shared_data.get.assert_called_with(
             constants.SHARED_DATA_USERNAME, CONF.username)
         mock_osutils.user_exists.assert_called_once_with('fake username')
-        mock_set_password.assert_called_once_with(mock_service, mock_osutils,
+        mock_get_password.assert_called_once_with(mock_service, mock_osutils)
+        mock_set_password.assert_called_once_with(mock_osutils,
+                                                  'fake password',
                                                   'fake username')
         mock_set_metadata_password.assert_called_once_with('fake password',
                                                            mock_service)
-        self.assertEqual((2, False), response)
+        self.assertEqual((1, False), response)

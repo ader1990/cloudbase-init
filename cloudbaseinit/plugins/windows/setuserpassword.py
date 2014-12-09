@@ -79,11 +79,9 @@ class SetUserPasswordPlugin(base.BasePlugin):
             LOG.info('No SSH public key available for password encryption')
             return True
 
-    def _set_password(self, service, osutils, user_name):
-        password = self._get_password(service, osutils)
+    def _set_password(self, osutils, password, user_name):
         LOG.info('Setting the user\'s password')
         osutils.set_user_password(user_name, password)
-        return password
 
     def execute(self, service, shared_data):
         # TODO(alexpilotti): The username selection logic must be set in the
@@ -91,20 +89,22 @@ class SetUserPasswordPlugin(base.BasePlugin):
         user_name = shared_data.get(constants.SHARED_DATA_USERNAME,
                                     CONF.username)
 
-        if service.can_post_password and service.is_password_set:
-            LOG.debug('User\'s password already set in the instance metadata')
-        else:
-            osutils = osutils_factory.get_os_utils()
-            if osutils.user_exists(user_name):
-                password = self._set_password(service, osutils, user_name)
-                # TODO(alexpilotti): encrypt with DPAPI
-                shared_data[constants.SHARED_DATA_PASSWORD] = password
+        osutils = osutils_factory.get_os_utils()
+        if osutils.user_exists(user_name):
+            password = self._get_password(service, osutils)
+            self._set_password(osutils, password, user_name)
+            # TODO(alexpilotti): encrypt with DPAPI
+            shared_data[constants.SHARED_DATA_PASSWORD] = password
 
-                if not service.can_post_password:
-                    LOG.info('Cannot set the password in the metadata as it '
-                             'is not supported by this service')
-                    return (base.PLUGIN_EXECUTION_DONE, False)
-                else:
-                    self._set_metadata_password(password, service)
+            if service.can_post_password and service.is_password_set:
+                LOG.debug('User\'s password already set in the instance '
+                          'metadata')
+            elif not service.can_post_password:
+                LOG.info('Cannot set the password in the metadata as it '
+                         'is not supported by this service')
+            else:
+                self._set_metadata_password(password, service)
+
+            return (base.PLUGIN_EXECUTION_DONE, False)
 
         return (base.PLUGIN_EXECUTE_ON_NEXT_BOOT, False)
