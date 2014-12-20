@@ -328,7 +328,7 @@ class WindowsUtils(base.BaseOSUtils):
     def _create_or_change_user(self, username, password, create,
                                password_expires):
         username_san = self.sanitize_shell_input(username)
-        password_san = self.sanitize_shell_input(password)
+        password_san = self.sanitize_cmd_input(password)
 
         args = ['NET', 'USER', username_san, password_san]
         if create:
@@ -444,6 +444,12 @@ class WindowsUtils(base.BaseOSUtils):
 
     def sanitize_shell_input(self, value):
         return value.replace('"', '\\"')
+
+    def sanitize_cmd_input(self, value):
+        sanitizable_chars = ["^", "\"", "\\", "'", "&"]
+        for char in sanitizable_chars:
+            value = value.replace(char, "^%c" % char)
+        return value
 
     def set_host_name(self, new_host_name):
         ret_val = kernel32.SetComputerNameExW(

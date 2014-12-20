@@ -174,6 +174,12 @@ class WindowsUtilsTest(unittest.TestCase):
         sanitised = ' \\" '
         self.assertEqual(sanitised, response)
 
+    def test_sanitize_cmd_input(self):
+        unsanitised = '^"\\\'&'
+        response = self._winutils.sanitize_cmd_input(unsanitised)
+        sanitised = '^^^"^\\^\'^&'
+        self.assertEqual(sanitised, response)
+
     @mock.patch('cloudbaseinit.osutils.windows.WindowsUtils'
                 '._set_user_password_expiration')
     @mock.patch('cloudbaseinit.osutils.windows.WindowsUtils'
