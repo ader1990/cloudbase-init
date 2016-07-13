@@ -12,12 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import posixpath
-
 from oslo_config import cfg
 from oslo_log import log as oslo_logging
 from six.moves.urllib import error
-from six.moves.urllib import request
 
 from cloudbaseinit.metadata.services import base
 from cloudbaseinit.metadata.services import baseopenstackservice
@@ -40,7 +37,7 @@ class HttpService(baseopenstackservice.BaseOpenStackService):
     _POST_PASSWORD_MD_VER = '2013-04-04'
 
     def __init__(self):
-        super(HttpService, self).__init__()
+        super(HttpService, self).__init__(base_url=CONF.metadata_base_url)
         self._enable_retry = True
 
     def load(self):
@@ -56,27 +53,8 @@ class HttpService(baseopenstackservice.BaseOpenStackService):
                       CONF.metadata_base_url)
             return False
 
-    def _get_response(self, req):
-        try:
-            return request.urlopen(req)
-        except error.HTTPError as ex:
-            if ex.code == 404:
-                raise base.NotExistingMetadataException()
-            else:
-                raise
-
-    def _get_data(self, path):
-        norm_path = posixpath.join(CONF.metadata_base_url, path)
-        LOG.debug('Getting metadata from: %s', norm_path)
-        req = request.Request(norm_path)
-        response = self._get_response(req)
-        return response.read()
-
     def _post_data(self, path, data):
-        norm_path = posixpath.join(CONF.metadata_base_url, path)
-        LOG.debug('Posting metadata to: %s', norm_path)
-        req = request.Request(norm_path, data=data)
-        self._get_response(req)
+        self._http_request(path, data=data)
         return True
 
     def _get_password_path(self):

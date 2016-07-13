@@ -17,11 +17,13 @@ import abc
 import collections
 import gzip
 import io
+import ssl
 import time
 
 from oslo_config import cfg
 from oslo_log import log as oslo_logging
 import six
+from six.moves import urllib
 
 from cloudbaseinit.utils import encoding
 
@@ -60,6 +62,24 @@ NetworkDetails = collections.namedtuple(
 
 
 class NotExistingMetadataException(Exception):
+    pass
+
+
+class ServiceException(Exception):
+
+    """Base exception for all the metadata services related errors."""
+
+    pass
+
+
+class CertificateVerifyFailed(ServiceException):
+
+    """The received certificate is not valid.
+
+    In order to avoid the current exception the validation of the SSL
+    certificate should be disabled for the metadata provider.
+    """
+
     pass
 
 
@@ -192,3 +212,62 @@ class BaseMetadataService(object):
             is True.
         """
         return False
+
+
+class BaseHTTPMetadataService(BaseMetadataService):
+
+    """Contract class for metadata services that are ussing HTTP(s)."""
+
+    def __init__(self, base_url=None):
+        super(BaseHTTPMetadataService, self).__init__()
+        self._base_url = base_url
+        self._context = None
+        self._headers = {}
+
+    @property
+    def headers(self):
+        """Return the HTTP headers that should be used."""
+        return self._headers
+
+    @property
+    def context(self):
+        """A ssl.SSLContext instance describing the various SSL options."""
+        return self._context
+
+    def _http_request(self, url, data=None):
+        """Get content for received url."""
+        if not data:
+            LOG.debug('Getting metadata from:  %s', url)
+        else:
+            LOG.debug('Posting data to %s', url)
+
+        request = urllib.request.Request(url, headers=self.headers, data=data)
+        response = urllib.request.urlopen(request, context=self._context)
+        return response.read()
+
+    def _get_data(self, path):
+        """Getting the required information ussing metadata service."""
+        metadata_url = urllib.parse.urljoin(self._base_url, path)
+
+        try:
+            content = self._http_request(metadata_url)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise NotExistingMetadataException()
+            raise
+        except (ssl.SSLError, urllib.error.URLError) as exc:
+            if "CERTIFICATE_VERIFY_FAILED" not in exc:
+                raise
+
+            if not self._context and hasattr(ssl, "create_default_context"):
+                # Note(alexcoman): This feature is available in
+                #                  Python 2.7.9 or older.
+                LOG.debug("Disabling SSL certificate validation for the "
+                          "current metadata provider.")
+                self._context = ssl.create_default_context()
+                self._context.check_hostname = False
+                self._context.verify_mode = ssl.CERT_NONE
+
+            raise CertificateVerifyFailed("Failed to verify the certificate.")
+
+        return content

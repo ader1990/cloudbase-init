@@ -36,7 +36,7 @@ CONF.register_opts(opts)
 LOG = oslo_logging.getLogger(__name__)
 
 
-class BaseOpenStackService(base.BaseMetadataService):
+class BaseOpenStackService(base.BaseHTTPMetadataService):
 
     def get_content(self, name):
         path = posixpath.normpath(

@@ -13,12 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import posixpath
-
 from oslo_config import cfg
 from oslo_log import log as oslo_logging
-from six.moves.urllib import error
-from six.moves.urllib import request
 
 from cloudbaseinit.metadata.services import base
 from cloudbaseinit.utils import network
@@ -37,11 +33,11 @@ CONF.register_opts(opts)
 LOG = oslo_logging.getLogger(__name__)
 
 
-class EC2Service(base.BaseMetadataService):
+class EC2Service(base.BaseHTTPMetadataService):
     _metadata_version = '2009-04-04'
 
     def __init__(self):
-        super(EC2Service, self).__init__()
+        super(EC2Service, self).__init__(base_url=CONF.ec2_metadata_base_url)
         self._enable_retry = True
 
     def load(self):
@@ -57,24 +53,6 @@ class EC2Service(base.BaseMetadataService):
             LOG.debug('Metadata not found at URL \'%s\'' %
                       CONF.ec2_metadata_base_url)
             return False
-
-    def _get_response(self, req):
-        try:
-            return request.urlopen(req)
-        except error.HTTPError as ex:
-            if ex.code == 404:
-                raise base.NotExistingMetadataException()
-            else:
-                raise
-
-    def _get_data(self, path):
-        norm_path = posixpath.join(CONF.ec2_metadata_base_url, path)
-
-        LOG.debug('Getting metadata from: %(norm_path)s',
-                  {'norm_path': norm_path})
-        req = request.Request(norm_path)
-        response = self._get_response(req)
-        return response.read()
 
     def get_host_name(self):
         return self._get_cache_data('%s/meta-data/local-hostname' %

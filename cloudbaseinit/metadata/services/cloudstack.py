@@ -38,21 +38,20 @@ SAVED_PASSWORD = b"saved_password"
 TIMEOUT = 10
 
 
-class CloudStack(base.BaseMetadataService):
+class CloudStack(base.BaseHTTPMetadataService):
 
     URI_TEMPLATE = 'http://%s/latest/meta-data/'
 
     def __init__(self):
         super(CloudStack, self).__init__()
         self.osutils = osutils_factory.get_os_utils()
-        self._metadata_uri = None
         self._router_ip = None
 
     def _test_api(self, ip_address):
         """Test if the CloudStack API is responding properly."""
-        self._metadata_uri = self.URI_TEMPLATE % ip_address
+        self._base_url = self.URI_TEMPLATE % ip_address
         try:
-            response = self._http_request(self._metadata_uri)
+            response = self._http_request(self._base_url)
             self._get_data('service-offering')
         except urllib.error.HTTPError as exc:
             LOG.debug('Error response code: %s', exc.code)
@@ -85,24 +84,6 @@ class CloudStack(base.BaseMetadataService):
                 return True
 
         return False
-
-    def _http_request(self, url, **kwargs):
-        """Get content for received url."""
-        LOG.debug('Getting metadata from:  %s', url)
-        request = urllib.request.Request(url, **kwargs)
-        response = urllib.request.urlopen(request)
-        return response.read()
-
-    def _get_data(self, path):
-        """Getting required metadata using CloudStack metadata API."""
-        metadata_uri = urllib.parse.urljoin(self._metadata_uri, path)
-        try:
-            content = self._http_request(metadata_uri)
-        except urllib.error.HTTPError as exc:
-            if exc.code == 404:
-                raise base.NotExistingMetadataException()
-            raise
-        return content
 
     def get_instance_id(self):
         """Instance name of the virtual machine."""
