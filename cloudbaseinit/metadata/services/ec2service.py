@@ -117,6 +117,11 @@ class EC2Service(base.BaseHTTPMetadataService):
         """
         return self._get_cache_data(self._get_url(HOST_NAME), decode=True)
 
+    def get_user_data(self):
+        return self._get_cache_data(
+            "%(version)s/user-data" % {"version": self._metadata_version}
+        )
+
     def get_instance_id(self):
         """Get the identifier for the current instance.
 
