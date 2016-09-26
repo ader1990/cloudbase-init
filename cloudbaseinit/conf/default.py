@@ -166,6 +166,7 @@ class GlobalOptions(conf_base.Options):
                     'ConfigWinRMCertificateAuthPlugin',
                     'cloudbaseinit.plugins.common.localscripts'
                     '.LocalScriptsPlugin',
+                    'cloudbaseinit.plugins.common.finalize.FinalizePlugin',
                 ],
                 help='List of enabled plugin classes, '
                      'to be executed in the provided order'),
@@ -190,6 +191,10 @@ class GlobalOptions(conf_base.Options):
                 'cloud_config_plugins', default=[],
                 help='List which contains the name of the cloud config '
                      'plugins ordered by priority.'),
+            cfg.BoolOpt(
+                'execute_finalize', default=False,
+                help='Executes metadata service logic when all the other '
+				     'plugins have finished their execution.'),
         ]
 
     def register(self):

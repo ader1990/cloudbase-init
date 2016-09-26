@@ -142,6 +142,9 @@ class InitManager(object):
                 reboot_required = self._handle_plugins_stage(
                     osutils, service, instance_id,
                     plugins_base.PLUGIN_STAGE_MAIN)
+
+                if CONF.execute_finalize:
+                    reboot_required = self._handle_plugins_stage(osutils, service, instance_id, plugins_base.PLUGIN_STAGE_FINALIZE) or reboot_required
             finally:
                 service.cleanup()
 

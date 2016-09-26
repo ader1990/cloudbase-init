@@ -1,4 +1,4 @@
-# Copyright 2012 Cloudbase Solutions Srl
+# Copyright 2016 Cloudbase Solutions Srl
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -12,23 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-PLUGIN_EXECUTION_DONE = 1
-PLUGIN_EXECUTE_ON_NEXT_BOOT = 2
-
-PLUGIN_STAGE_PRE_NETWORKING = "PRE_NETWORKING"
-PLUGIN_STAGE_PRE_METADATA_DISCOVERY = "PRE_METADATA_DISCOVERY"
-PLUGIN_STAGE_MAIN = "MAIN"
-PLUGIN_STAGE_FINALIZE = "FINALIZE"
+from cloudbaseinit import conf as cloudbaseinit_conf
+from cloudbaseinit.plugins.common import base
 
 
-class BasePlugin(object):
-    execution_stage = PLUGIN_STAGE_MAIN
+CONF = cloudbaseinit_conf.CONF
 
-    def get_name(self):
-        return self.__class__.__name__
 
-    def get_os_requirements(self):
-        return None, None
+class FinalizePlugin(base.BasePlugin):
+    execution_stage = base.PLUGIN_STAGE_FINALIZE
 
     def execute(self, service, shared_data):
-        pass
+        on_finalize = service.on_finalize()
+        if (on_finalize):
+            on_finalize()
+            return base.PLUGIN_EXECUTION_DONE, False
