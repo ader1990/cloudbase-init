@@ -148,7 +148,12 @@ class PacketService(base.BaseHTTPMetadataService):
         Make a POST request to phone_home_url with no body (important!)
         and this will complete the install process
         """
-        LOG.debug("Calling home")
+        phone_home_url = self._get_cache_data("metadata/phone_home_url", decode=False)
+        if phone_home_url:
+            LOG.info("Calling home to: {0}".format(phone_home_url))
+            self._http_request(url=phone_home_url, method="post")
+        else:
+            LOG.debug("Could not retrieve phone_home_url from metadata")
 
     def on_finalize(self):
         action = lambda: self._call_home()
