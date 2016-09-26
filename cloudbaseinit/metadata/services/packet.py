@@ -15,6 +15,7 @@
 from oslo_config import cfg
 from oslo_log import log as oslo_logging
 from cloudbaseinit import conf as cloudbaseinit_conf
+from six.moves.urllib import error
 
 import json
 import requests
@@ -100,7 +101,6 @@ class PacketService(base.BaseHTTPMetadataService):
             except requests.RequestException as exc:
                 LOG.debug("%(data)s not found at URL %(url)r: %(reason)r",
                           {"data": path.title(), "url": url, "reason": exc})
-                return False
         try:
             self._raw_data["metadata"] = json.loads(encoding.get_as_string(
                 self._raw_data["metadata"]))
@@ -136,25 +136,60 @@ class PacketService(base.BaseHTTPMetadataService):
 
         return keys if keys else None
 
+    def get_encryption_public_key(self):
+        url = requests.compat.urljoin('{}/'.format(self._get_phone_endpoint()),
+                                      "key")
+        try:
+            action = lambda : self._http_request(url)
+            raw_data= self._exec_with_retry(action)
+        except requests.RequestException as exc:
+            LOG.debug("Data not found at URL %(url)r: %(reason)r",
+                {"url": url, "reason": exc})
+            return False
+        return [raw_data.decode('utf-8')]
+
     def get_user_data(self):
         """Get the available user data for the current instance."""
         return self._get_cache_data("userdata", decode=False)
 
+    def _get_phone_endpoint(self):
+        return self._get_cache_data("metadata/phone_home_url")
+
     def _call_home(self):
         """
-        For phone home, on the first boot after install make a GET request to
-        CONF.packet.metadata_url, which will return a JSON object which contains
-        phone_home_url entry
+        For phone home, on the first boot after install make a GET
+        request to CONF.packet.metadata_url, which will return a
+        JSON object which contains phone_home_url entry
         Make a POST request to phone_home_url with no body (important!)
         and this will complete the install process
         """
-        phone_home_url = self._get_cache_data("metadata/phone_home_url", decode=False)
-        if phone_home_url:
-            LOG.info("Calling home to: {0}".format(phone_home_url))
-            self._http_request(url=phone_home_url, method="post")
+        path = self._get_phone_endpoint()
+        if path:
+            LOG.info("Calling home to: {0}".format(path))
+            self._post_data(path, None)
         else:
             LOG.debug("Could not retrieve phone_home_url from metadata")
 
     def on_finalize(self):
         action = lambda: self._call_home()
-        return action
+        return lambda: self._exec_with_retry(action)
+
+    def _post_data(self, path, data):
+        self._http_request(url=path, data=data, method="post")
+        return True
+
+    @property
+    def can_post_password(self):
+        return True
+
+    def post_password(self, enc_password_b64):
+        try:
+            path = self._get_phone_endpoint()
+            action = lambda : self._post_data(path,
+               json.dumps({ 'password' : enc_password_b64.decode()}))
+            return self._exec_with_retry(action)
+        except error.HTTPError as ex:
+            LOG.error("Failed to post password to the metadata service")
+            raise
+        else:
+            raise

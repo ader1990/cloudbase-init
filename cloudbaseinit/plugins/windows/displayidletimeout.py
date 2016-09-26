@@ -18,6 +18,7 @@ from cloudbaseinit import conf as cloudbaseinit_conf
 from cloudbaseinit.plugins.common import base
 from cloudbaseinit.utils.windows import powercfg
 
+
 CONF = cloudbaseinit_conf.CONF
 LOG = oslo_logging.getLogger(__name__)
 
