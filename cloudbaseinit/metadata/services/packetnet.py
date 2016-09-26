@@ -139,3 +139,17 @@ class PacketService(base.BaseHTTPMetadataService):
     def get_user_data(self):
         """Get the available user data for the current instance."""
         return self._get_cache_data("userdata", decode=False)
+
+    def _call_home(self):
+        """
+        For phone home, on the first boot after install make a GET request to
+        CONF.packet.metadata_url, which will return a JSON object which contains
+        phone_home_url entry
+        Make a POST request to phone_home_url with no body (important!)
+        and this will complete the install process
+        """
+        LOG.debug("Calling home")
+
+    def on_finalize(self):
+        action = lambda: self._call_home()
+        return action
