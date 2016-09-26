@@ -165,6 +165,7 @@ class GlobalOptions(conf_base.Options):
                     'ConfigWinRMCertificateAuthPlugin',
                     'cloudbaseinit.plugins.common.localscripts'
                     '.LocalScriptsPlugin',
+                    'cloudbaseinit.plugins.common.finalize.FinalizePlugin',
                 ],
                 help='List of enabled plugin classes, '
                      'to be executed in the provided order'),
