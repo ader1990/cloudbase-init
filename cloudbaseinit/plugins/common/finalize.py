@@ -23,7 +23,10 @@ LOG = oslo_logging.getLogger(__name__)
 
 
 class FinalizePlugin(base.BasePlugin):
-
+    execution_stage = base.PLUGIN_STAGE_FINALIZE
 
     def execute(self, service, shared_data):
-        return base.PLUGIN_EXECUTION_DONE, False
+        on_finalize = service.on_finalize()
+        if (on_finalize):
+            on_finalize()
+            return base.PLUGIN_EXECUTION_DONE, False

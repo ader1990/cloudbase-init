@@ -183,6 +183,13 @@ class BaseMetadataService(object):
         """
         return False
 
+    def on_finalize(self):
+        """ Return metadata service specific logic to be executed when all
+        the other plugins have finished their execution.
+        That provider specific logic is encapsulated in a
+        lambda and will be executed as a plugin.
+        """
+    pass
 
 class BaseHTTPMetadataService(BaseMetadataService):
 
