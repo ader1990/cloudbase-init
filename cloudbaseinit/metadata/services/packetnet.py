@@ -137,12 +137,24 @@ class PacketService(base.BaseHTTPMetadataService):
 
         return keys if keys else None
 
+    def get_encryption_public_key(self):
+        path = "key"
+        url = requests.compat.urljoin(self._get_phone_endpoint(), path)
+        try:
+            action = lambda: self._http_request(url)
+            raw_data= self._exec_with_retry(action)
+        except requests.RequestException as exc:
+            LOG.debug("%(data)s not found at URL %(url)r: %(reason)r",
+                     {"data": path, "url": url, "reason": exc})
+            return False
+        return [raw_data.decode('utf-8')]
+
     def get_user_data(self):
         """Get the available user data for the current instance."""
         return self._get_cache_data("userdata", decode=False)
 
-    def _get_post_endpoint(self):
-        return self._get_cache_data("metadata/phone_home_url")
+    def _get_phone_endpoint(self):
+        return self._get_cache_data("metadata/phone_home_url/")
 
     def _call_home(self):
         """
@@ -152,7 +164,7 @@ class PacketService(base.BaseHTTPMetadataService):
         Make a POST request to phone_home_url with no body (important!)
         and this will complete the install process
         """
-        path = self._get_post_endpoint
+        path = self._get_phone_endpoint
         if path:
             LOG.info("Calling home to: {0}".format(path))
             self._post_data(path, None)
@@ -173,7 +185,7 @@ class PacketService(base.BaseHTTPMetadataService):
 
     def post_password(self, enc_password_b64):
         try:
-            path = self._get_post_endpoint()
+            path = self._get_phone_endpoint()
             action = lambda: self._post_data(path, json.dumps({ 'password' : enc_password_b64.decode()}))
             return self._exec_with_retry(action)
         except error.HTTPError as ex:
