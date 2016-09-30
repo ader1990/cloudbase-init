@@ -14,9 +14,13 @@
 
 from cloudbaseinit import conf as cloudbaseinit_conf
 from cloudbaseinit.plugins.common import base
-
+from oslo_log import log as oslo_logging
 
 CONF = cloudbaseinit_conf.CONF
+LOG = oslo_logging.getLogger(__name__)
+
+CONF = cloudbaseinit_conf.CONF
+LOG = oslo_logging.getLogger(__name__)
 
 
 class FinalizePlugin(base.BasePlugin):
@@ -27,3 +31,5 @@ class FinalizePlugin(base.BasePlugin):
         if (on_finalize):
             on_finalize()
             return base.PLUGIN_EXECUTION_DONE, False
+        else:
+            LOG.debug("Service does not implement finalize action.")

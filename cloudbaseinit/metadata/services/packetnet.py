@@ -138,14 +138,13 @@ class PacketService(base.BaseHTTPMetadataService):
         return keys if keys else None
 
     def get_encryption_public_key(self):
-        path = "key"
-        url = requests.compat.urljoin(self._get_phone_endpoint(), path)
+        url = requests.compat.urljoin('{}/'.format(self._get_phone_endpoint()), "key")
         try:
             action = lambda: self._http_request(url)
             raw_data= self._exec_with_retry(action)
         except requests.RequestException as exc:
-            LOG.debug("%(data)s not found at URL %(url)r: %(reason)r",
-                     {"data": path, "url": url, "reason": exc})
+            LOG.debug("Data not found at URL %(url)r: %(reason)r",
+                     {"url": url, "reason": exc})
             return False
         return [raw_data.decode('utf-8')]
 
@@ -154,7 +153,7 @@ class PacketService(base.BaseHTTPMetadataService):
         return self._get_cache_data("userdata", decode=False)
 
     def _get_phone_endpoint(self):
-        return self._get_cache_data("metadata/phone_home_url/")
+        return self._get_cache_data("metadata/phone_home_url")
 
     def _call_home(self):
         """
@@ -164,7 +163,7 @@ class PacketService(base.BaseHTTPMetadataService):
         Make a POST request to phone_home_url with no body (important!)
         and this will complete the install process
         """
-        path = self._get_phone_endpoint
+        path = self._get_phone_endpoint()
         if path:
             LOG.info("Calling home to: {0}".format(path))
             self._post_data(path, None)
@@ -172,7 +171,7 @@ class PacketService(base.BaseHTTPMetadataService):
             LOG.debug("Could not retrieve phone_home_url from metadata")
 
     def on_finalize(self):
-        action = lambda: self._call_home
+        action = lambda: self._call_home()
         return lambda: self._exec_with_retry(action)
 
     def _post_data(self, path, data):
