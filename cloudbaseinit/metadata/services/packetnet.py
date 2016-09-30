@@ -101,7 +101,6 @@ class PacketService(base.BaseHTTPMetadataService):
             except requests.RequestException as exc:
                 LOG.debug("%(data)s not found at URL %(url)r: %(reason)r",
                           {"data": path.title(), "url": url, "reason": exc})
-                return False
         try:
             self._raw_data["metadata"] = json.loads(encoding.get_as_string(
                 self._raw_data["metadata"]))
@@ -138,13 +137,14 @@ class PacketService(base.BaseHTTPMetadataService):
         return keys if keys else None
 
     def get_encryption_public_key(self):
-        url = requests.compat.urljoin('{}/'.format(self._get_phone_endpoint()), "key")
+        url = requests.compat.urljoin('{}/'.format(self._get_phone_endpoint()),
+                                      "key")
         try:
-            action = lambda: self._http_request(url)
+            action = lambda : self._http_request(url)
             raw_data= self._exec_with_retry(action)
         except requests.RequestException as exc:
             LOG.debug("Data not found at URL %(url)r: %(reason)r",
-                     {"url": url, "reason": exc})
+                {"url": url, "reason": exc})
             return False
         return [raw_data.decode('utf-8')]
 
@@ -157,9 +157,9 @@ class PacketService(base.BaseHTTPMetadataService):
 
     def _call_home(self):
         """
-        For phone home, on the first boot after install make a GET request to
-        CONF.packet.metadata_url, which will return a JSON object which contains
-        phone_home_url entry
+        For phone home, on the first boot after install make a GET
+        request to CONF.packet.metadata_url, which will return a
+        JSON object which contains phone_home_url entry
         Make a POST request to phone_home_url with no body (important!)
         and this will complete the install process
         """
@@ -185,10 +185,11 @@ class PacketService(base.BaseHTTPMetadataService):
     def post_password(self, enc_password_b64):
         try:
             path = self._get_phone_endpoint()
-            action = lambda: self._post_data(path, json.dumps({ 'password' : enc_password_b64.decode()}))
+            action = lambda : self._post_data(path,
+               json.dumps({ 'password' : enc_password_b64.decode()}))
             return self._exec_with_retry(action)
         except error.HTTPError as ex:
-            LOG.error("Failed to post password")
+            LOG.error("Failed to post password to the metadata service")
             raise
         else:
             raise
