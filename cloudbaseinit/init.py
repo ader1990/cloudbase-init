@@ -113,11 +113,34 @@ class InitManager(object):
 
         return reboot_required
 
+    def _change_service_user_password(self, osutils, service_name):
+        if not osutils.check_service_exists(service_name):
+            return
+        username = osutils.get_service_username(service_name)
+        if osutils.user_exists(username):
+            LOG.debug('Generating a random user password')
+            # This is needed to avoid pass the hash attacks
+            maximum_length = osutils.get_maximum_password_length()
+            password = osutils.generate_random_password(
+                maximum_length)
+            osutils.set_user_password(username, password)
+            LOG.debug("Setting service username and password")
+            osutils.set_service_credentials(service_name,
+                                            ".\{}".format(username),
+                                            password)
+        else:
+            LOG.debug('User {} does not exist or has a well-known SID'
+                       .format(username))
+
     def configure_host(self):
         LOG.info('Cloudbase-Init version: %s', version.get_version())
 
         osutils = osutils_factory.get_os_utils()
         osutils.wait_for_boot_completion()
+
+        if sys.platform == 'win32' and CONF.service_name:
+            self._change_service_user_password(osutils,
+                                               CONF.service_name)
 
         reboot_required = self._handle_plugins_stage(
             osutils, None, None,

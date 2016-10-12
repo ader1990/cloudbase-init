@@ -21,6 +21,7 @@ import struct
 import time
 
 from oslo_log import log as oslo_logging
+import pywintypes
 import six
 from six.moves import winreg
 from tzlocal import windows_tz
@@ -29,6 +30,8 @@ import win32net
 import win32netcon
 import win32process
 import win32security
+import win32service
+import win32serviceutil
 import wmi
 
 from cloudbaseinit import exception
@@ -720,6 +723,36 @@ class WindowsUtils(base.BaseOSUtils):
                 'Stopping service %(service_name)s failed with return value:'
                 ' %(ret_val)d' % {'service_name': service_name,
                                   'ret_val': ret_val})
+
+    def set_service_credentials(self, service_name, username, password):
+        LOG.debug('Setting service %s', service_name)
+        try:
+            win32serviceutil.ChangeServiceConfig(
+                serviceName=service_name, userName=username, password=password,
+                pythonClassString=service_name)
+        except pywintypes.error:
+            raise exception.CloudbaseInitException(
+                'Setting username and password for service %(service_name)s '
+                'failed' % {'service_name': service_name})
+
+    def get_service_username(self, service_name):
+        LOG.debug('Getting service %s username', service_name)
+        try:
+            scm = win32service.OpenSCManager(
+                '', None, win32service.SC_MANAGER_ALL_ACCESS)
+            s = win32service.OpenService(scm, service_name,
+                                         win32service.SERVICE_ALL_ACCESS)
+            cfg = win32service.QueryServiceConfig(s)
+            username = cfg[7]
+            try:
+                fqdn_index = username.index('.\\')
+                return username[fqdn_index + 2:]
+            except ValueError:
+                return username
+        except pywintypes.error:
+            raise exception.CloudbaseInitException(
+                'Getting username for service %(service_name)s '
+                'failed' % {'service_name': service_name})
 
     def terminate(self):
         # Wait for the service to start. Polling the service "Started" property

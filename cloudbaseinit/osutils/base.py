@@ -118,3 +118,11 @@ class BaseOSUtils(object):
     def change_password_next_logon(self, username):
         """Force the given user to change his password at the next login."""
         raise NotImplementedError()
+
+    def set_service_credentials(self, service_name, username, password):
+        """Set the username and password for a given service"""
+        raise NotImplementedError()
+
+    def get_service_username(self, service_name):    
+        """Retrieve the username under which a service runs"""
+        raise NotImplementedError()

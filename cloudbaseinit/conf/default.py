@@ -121,6 +121,14 @@ class GlobalOptions(conf_base.Options):
                      'the password is a clear text password, coming from the '
                      'metadata. The last option is `no`, when the user is '
                      'never forced to change the password.'),
+            cfg.StrOpt(
+                'service_name', default="",
+                help='The cloudbase-init service name.'
+                     'If present, the service user password will be set at each '
+                     'boot with to a new random value of appropriate length '
+                     'and complexity, unless the user is a built-in one.'
+                     'This is needed to avoid "pass the hash" attacks on '
+                     'Windows cloned instances.'),
             cfg.ListOpt(
                 'metadata_services',
                 default=[
