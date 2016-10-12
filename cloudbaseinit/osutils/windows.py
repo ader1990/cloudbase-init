@@ -721,6 +721,16 @@ class WindowsUtils(base.BaseOSUtils):
                 ' %(ret_val)d' % {'service_name': service_name,
                                   'ret_val': ret_val})
 
+    def set_service(self, service_name, username, password):
+        LOG.debug('Setting service %s', service_name)
+        service = self._get_service(service_name)
+        (ret_val,) = service.Change(StartName=username, StartPassword=password)
+        if ret_val != 0:
+            raise exception.CloudbaseInitException(
+                'Setting username and password for service %(service_name)s '
+                'failed with return value: %(ret_val)d' % {'service_name': service_name,
+                                  'ret_val': ret_val})
+
     def terminate(self):
         # Wait for the service to start. Polling the service "Started" property
         # is not enough

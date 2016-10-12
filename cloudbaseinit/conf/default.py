@@ -121,6 +121,15 @@ class GlobalOptions(conf_base.Options):
                      'the password is a clear text password, coming from the '
                      'metadata. The last option is `no`, when the user is '
                      'never forced to change the password.'),
+            cfg.StrOpt(
+                'service_username', default="",
+                help='The username for the cloudbase-init service.'
+                     'If the service name is provided, '
+                     'its password will be randomized by the '
+                     'SetServiceUserPlugin.'),
+            cfg.StrOpt(
+                'service_name', default="cloudbase-init",
+                help='The service under which cloudbase-init runs.'),
             cfg.ListOpt(
                 'metadata_services',
                 default=[
@@ -165,6 +174,8 @@ class GlobalOptions(conf_base.Options):
                     'ConfigWinRMCertificateAuthPlugin',
                     'cloudbaseinit.plugins.common.localscripts'
                     '.LocalScriptsPlugin',
+                    'cloudbaseinit.plugins.windows.setserviceuser'
+                    '.SetServiceUser',
                 ],
                 help='List of enabled plugin classes, '
                      'to be executed in the provided order'),

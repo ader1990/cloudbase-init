@@ -50,6 +50,7 @@ STAGE = {
         'cloudbaseinit.plugins.windows.winrmcertificateauth.'
         'ConfigWinRMCertificateAuthPlugin',
         'cloudbaseinit.plugins.common.localscripts.LocalScriptsPlugin',
+        'cloudbaseinit.plugins.windows.setserviceuser.SetServiceUser',
     ]
 }
 
