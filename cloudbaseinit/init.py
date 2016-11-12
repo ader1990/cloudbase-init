@@ -113,13 +113,39 @@ class InitManager(object):
 
         return reboot_required
 
-    def configure_host(self):
-        LOG.info('Cloudbase-Init version: %s', version.get_version())
+    @staticmethod
+    def _reset_service_password_and_respawn(osutils):
+        # Avoid pass the hash attacks from cloned instances
+        credentials = osutils.reset_service_password()
+        if credentials:
+            service_domain, service_user, service_password = credentials
+            current_domain, current_user = osutils.get_current_user()
+            # No need to check domain as password reset applies to local
+            # users only
+            if current_user != service_user:
+                LOG.debug("No need to respawn process. Current user: "
+                          "%(current_user)s. Service user: "
+                          "%(service_user)s",
+                          {"current_user": current_user,
+                           "service_user": service_user})
+                return
 
+            LOG.info("Respawning current process with updated credentials")
+            token = osutils.create_user_logon_session(
+                service_user, service_password, service_domain,
+                logon_type=osutils.LOGON32_LOGON_BATCH)
+            exit_code = osutils.execute_process_as_user(
+                token, sys.argv + ["--noreset_service_password"])
+            LOG.info("Process execution ended with exit code: %s", exit_code)
+            sys.exit(exit_code)
+
+    def configure_host(self):
         osutils = osutils_factory.get_os_utils()
-        if CONF.reset_service_password:
-            # Avoid pass the hash attacks from cloned instances
-            osutils.reset_service_password()
+
+        if CONF.reset_service_password and sys.platform == 'win32':
+            self._reset_service_password_and_respawn(osutils)
+
+        LOG.info('Cloudbase-Init version: %s', version.get_version())
         osutils.wait_for_boot_completion()
 
         reboot_required = self._handle_plugins_stage(
