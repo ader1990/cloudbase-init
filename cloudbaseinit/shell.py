@@ -35,10 +35,10 @@ LOG = oslo_logging.getLogger(__name__)
 
 def main():
     CONF(sys.argv[1:])
-    logging.setup('cloudbaseinit')
+    serialportlog = logging.setup('cloudbaseinit')
 
     try:
-        init.InitManager().configure_host()
+        init.InitManager().configure_host(serialportlog)
     except Exception as exc:
         LOG.exception(exc)
         raise

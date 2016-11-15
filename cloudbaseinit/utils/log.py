@@ -33,8 +33,8 @@ class SerialPortHandler(logging.StreamHandler):
             self._stream = stream
 
         def write(self, data):
-            if self._stream and not self._stream.isOpen():
-                    self._stream.open()
+#            if self._stream and not self._stream.isOpen():
+#                    self._stream.open()
 
             if isinstance(data, six.text_type):
                 self._stream.write(data.encode("utf-8"))
@@ -45,7 +45,7 @@ class SerialPortHandler(logging.StreamHandler):
         self._port = None
         if CONF.logging_serial_port_settings:
             settings = CONF.logging_serial_port_settings.split(',')
-
+            #import pdb; pdb.set_trace()
             try:
                 self._port = serial.Serial(port=settings[0],
                                            baudrate=int(settings[1]),
@@ -62,8 +62,14 @@ class SerialPortHandler(logging.StreamHandler):
             self._UnicodeToBytesStream(self._port))
 
     def close(self):
+        #import pdb; pdb.set_trace()
         if self._port and self._port.isOpen():
             self._port.close()
+            self._port = None
+
+    def open(self):
+        if self._port and not self._port.isOpen():
+            self._port.open()
 
 
 def setup(product_name):
@@ -79,3 +85,4 @@ def setup(product_name):
         serialportlog.setFormatter(
             formatters.ContextFormatter(project=product_name,
                                         datefmt=datefmt))
+        return serialportlog

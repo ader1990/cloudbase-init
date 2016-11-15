@@ -114,7 +114,7 @@ class InitManager(object):
         return reboot_required
 
     @staticmethod
-    def _reset_service_password_and_respawn(osutils):
+    def _reset_service_password_and_respawn(osutils, serialportlog):
         # Avoid pass the hash attacks from cloned instances
         credentials = osutils.reset_service_password()
         if credentials:
@@ -122,7 +122,7 @@ class InitManager(object):
             current_domain, current_user = osutils.get_current_user()
             # No need to check domain as password reset applies to local
             # users only
-            if current_user != service_user:
+            if current_user.upper() != service_user.upper():
                 LOG.debug("No need to respawn process. Current user: "
                           "%(current_user)s. Service user: "
                           "%(service_user)s",
@@ -134,16 +134,19 @@ class InitManager(object):
             token = osutils.create_user_logon_session(
                 service_user, service_password, service_domain,
                 logon_type=osutils.LOGON32_LOGON_BATCH)
+            #import pdb;pdb.set_trace()
+            serialportlog.close()
             exit_code = osutils.execute_process_as_user(
-                token, sys.argv + ["--noreset_service_password"])
+                token, [sys.executable] + sys.argv + ["--noreset_service_password"])
+            serialportlog.open()
             LOG.info("Process execution ended with exit code: %s", exit_code)
             sys.exit(exit_code)
 
-    def configure_host(self):
+    def configure_host(self, serialportlog):
         osutils = osutils_factory.get_os_utils()
-
+        #import pdb; pdb.set_trace()
         if CONF.reset_service_password and sys.platform == 'win32':
-            self._reset_service_password_and_respawn(osutils)
+            self._reset_service_password_and_respawn(osutils, serialportlog)
 
         LOG.info('Cloudbase-Init version: %s', version.get_version())
         osutils.wait_for_boot_completion()
