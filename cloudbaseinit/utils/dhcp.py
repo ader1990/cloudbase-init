@@ -126,8 +126,10 @@ def get_dhcp_options(dhcp_host, requested_options=[], timeout=5.0,
     id_req = random.randint(0, 2 ** 32 - 1)
     options = None
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     try:
         _bind_dhcp_client_socket(s, max_bind_attempts, bind_retry_interval)
 
@@ -139,7 +141,7 @@ def get_dhcp_options(dhcp_host, requested_options=[], timeout=5.0,
 
         data = _get_dhcp_request_data(id_req, mac_address, requested_options,
                                       vendor_id)
-        s.send(data)
+        s.sendto(data, ("<broadcast>", 67))
 
         start = datetime.datetime.now()
         now = start
