@@ -267,6 +267,10 @@ class GlobalOptions(conf_base.Options):
                 help='Copies the userdata to the given file path. The path '
                      'can include environment variables that will be expanded,'
                      ' e.g. "%%SYSTEMDRIVE%%\\CloudbaseInit\\UserData.bin"'),
+            cfg.BoolOpt(
+                'enable_automatic_updates', default=None,
+                help='If not None, automatic updates is set to the given'
+                     ' value.'),
         ]
 
         self._cli_options = [
