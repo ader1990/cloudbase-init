@@ -189,6 +189,9 @@ class GlobalOptions(conf_base.Options):
                 'cloud_config_plugins', default=[],
                 help='List which contains the name of the cloud config '
                      'plugins ordered by priority.'),
+            cfg.BoolOpt(
+                'enable_automatic_updates', default=False,
+                help='Enables automated updates'),
         ]
 
         self._cli_options = [
