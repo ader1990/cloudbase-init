@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from os import name as os_name
+import os
 
 from cloudbaseinit.osutils import factory as osutils_factory
 from cloudbaseinit.utils import classloader
@@ -28,7 +28,8 @@ def get_storage_manager():
 
     osutils = osutils_factory.get_os_utils()
     cl = classloader.ClassLoader()
-    if os_name == "nt":
+
+    if os.name == "nt":
         if osutils.is_nano_server():
             # VDS is not available on Nano Server
             # WSM supersedes VDS since Windows Server 2012 / Windows 8

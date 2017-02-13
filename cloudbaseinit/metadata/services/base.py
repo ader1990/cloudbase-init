@@ -154,15 +154,6 @@ class BaseMetadataService(object):
     def post_password(self, enc_password_b64):
         pass
 
-    def get_server_certs(self):
-        pass
-
-    def get_vm_agent_package_provisioning_data(self):
-        pass
-
-    def get_winrm_listeners_configuration(self):
-        pass
-
     def get_client_auth_certs(self):
         pass
 
@@ -206,10 +197,6 @@ class BaseMetadataService(object):
         pass
 
     def get_use_avma_licensing(self):
-        pass
-
-    def get_enable_automatic_updates(self):
-        """Check if the metadata provider enforces automatic updates."""
         pass
 
 

@@ -1,4 +1,4 @@
-# Copyright 2015 Cloudbase Solutions Srl
+# Copyright 2017 Cloudbase Solutions Srl
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,12 +14,16 @@
 
 import abc
 
-import six
 
-
-@six.add_metaclass(abc.ABCMeta)
-class BaseStorageManager(object):
-
+class BaseInstrumentation(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def extend_volumes(self, volume_indexes=None):
+    def instrument_call(self, name, callable):
         pass
+
+    def initialize(self):
+        pass
+
+
+class NoOpInstrumentation(BaseInstrumentation):
+    def instrument_call(self, name, callable):
+        return callable()

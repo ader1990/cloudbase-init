@@ -13,8 +13,6 @@
 #    under the License.
 
 
-import ctypes
-from ctypes import util
 import importlib
 import unittest
 
@@ -29,21 +27,12 @@ from cloudbaseinit import exception
 class TestWSMStorageManager(unittest.TestCase):
 
     def setUp(self):
-        self._mock_ctypes = ctypes
-        self._mock_ctypes = util
-        self._mock_ctypes.windll = mock.MagicMock()
-        self._mock_ctypes.wintypes = mock.MagicMock()
-        self._mock_ctypes.Structure = mock.MagicMock()
-        self._mock_ctypes.POINTER = mock.MagicMock()
         self.mock_wmi = mock.MagicMock()
 
         patcher = mock.patch.dict(
             "sys.modules",
             {
-                "wmi": self.mock_wmi,
-                "six.moves": mock.MagicMock(),
-                "ctypes": self._mock_ctypes,
-                "oslo_log": mock.MagicMock()
+                "wmi": self.mock_wmi
             }
         )
         patcher.start()

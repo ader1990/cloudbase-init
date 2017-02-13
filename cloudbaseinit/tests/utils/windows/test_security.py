@@ -20,7 +20,12 @@ try:
 except ImportError:
     import mock
 
-from cloudbaseinit.tests import testutils
+
+class FakeWindowsError(Exception):
+    """WindowsError is available on Windows only."""
+
+    def __init__(self, errno):
+        self.errno = errno
 
 
 class WindowsSecurityUtilsTests(unittest.TestCase):
@@ -37,7 +42,7 @@ class WindowsSecurityUtilsTests(unittest.TestCase):
 
         self.security = importlib.import_module(
             "cloudbaseinit.utils.windows.security")
-        self.security.WindowsError = testutils.FakeWindowsError
+        self.security.WindowsError = FakeWindowsError
 
         self._security_utils = self.security.WindowsSecurityUtils()
 

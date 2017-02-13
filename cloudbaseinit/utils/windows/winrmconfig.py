@@ -164,7 +164,7 @@ class WinRMConfig(object):
             '</p:CertificateThumbPrint>'
             '<p:URLPrefix>wsman</p:URLPrefix>'
             '</p:Listener>' % {"enabled": self._get_xml_bool(enabled),
-                               "cert_thumbprint": cert_thumbprint or ""})
+                               "cert_thumbprint": cert_thumbprint})
 
     def set_auth_config(self, basic=None, kerberos=None, negotiate=None,
                         certificate=None, credSSP=None,

@@ -86,12 +86,6 @@ class GlobalOptions(conf_base.Options):
                 'winrm_enable_basic_auth', default=True,
                 help='Enables basic authentication for the WinRM '
                      'HTTPS listener'),
-            cfg.BoolOpt(
-                'winrm_configure_http_listener', default=False,
-                help='Configures the WinRM HTTP listener'),
-            cfg.BoolOpt(
-                'winrm_configure_https_listener', default=True,
-                help='Configures the WinRM HTTPS listener'),
             cfg.ListOpt(
                 'volumes_to_extend', default=None,
                 help='List of volumes that need to be extended '
@@ -99,12 +93,6 @@ class GlobalOptions(conf_base.Options):
                      'By default all the available volumes can be extended. '
                      'Volumes must be specified using a comma separated list '
                      'of volume indexes, e.g.: "1,2"'),
-            cfg.StrOpt(
-                'san_policy', default=None,
-                choices=[constant.SAN_POLICY_ONLINE_STR,
-                         constant.SAN_POLICY_OFFLINE_STR,
-                         constant.SAN_POLICY_OFFLINE_SHARED_STR],
-                help='If not None, the SAN policy is set to the given value'),
             cfg.StrOpt(
                 'local_scripts_path', default=None,
                 help='Path location containing scripts to be executed when '
@@ -270,6 +258,26 @@ class GlobalOptions(conf_base.Options):
             cfg.BoolOpt(
                 'enable_automatic_updates', default=False,
                 help='Enables automated updates'),
+            cfg.BoolOpt(
+                'metadata_report_provisioning_started', default=False,
+                help='Reports to the metadata service that provisioning has '
+                     'started'),
+            cfg.BoolOpt(
+                'metadata_report_provisioning_completed', default=False,
+                help='Reports to the metadata service that provisioning '
+                     'completed or failed'),
+            cfg.StrOpt(
+                'instrumentation_class',
+                default=None,
+                help='Instrumentation class path'),
+            cfg.StrOpt(
+                'configuration_pass',
+                default=None,
+                choices=[constant.CONFIGURATION_PASS_SPECIALIZE,
+                         constant.CONFIGURATION_PASS_SETUP_COMPLETE,
+                         constant.CONFIGURATION_PASS_SERVICE,
+                         constant.CONFIGURATION_PASS_ERROR_HANDLER],
+                help='The configuration pass name'),
         ]
 
         self._cli_options = [

@@ -30,11 +30,6 @@ CD_LOCATIONS = {
 }
 
 POLICY_IGNORE_ALL_FAILURES = "ignoreallfailures"
-
-SAN_POLICY_ONLINE_STR = 'OnlineAll'
-SAN_POLICY_OFFLINE_STR = 'OfflineAll'
-SAN_POLICY_OFFLINE_SHARED_STR = 'OfflineShared'
-
 CLEAR_TEXT_INJECTED_ONLY = 'clear_text_injected_only'
 ALWAYS_CHANGE = 'always'
 NEVER_CHANGE = 'no'
@@ -46,3 +41,13 @@ VOL_ACT_AVMA = "AVMA"
 
 CERT_LOCATION_LOCAL_MACHINE = "LocalMachine"
 CERT_LOCATION_CURRENT_USER = "CurrentUser"
+
+INSTRUMENT_REBOOT = "instrument_reboot"
+INSTRUMENT_PROVISIONING_STARTED = "instrument_provisioning_started"
+INSTRUMENT_PROVISIONING_COMPLETED = "instrument_provisioning_completed"
+INSTRUMENT_PROVISIONING_FAILED = "instrument_provisioning_failed"
+
+CONFIGURATION_PASS_SPECIALIZE = "specialize"
+CONFIGURATION_PASS_SETUP_COMPLETE = "setup_complete"
+CONFIGURATION_PASS_SERVICE = "service"
+CONFIGURATION_PASS_ERROR_HANDLER = "error_handler"
