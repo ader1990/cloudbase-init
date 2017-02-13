@@ -282,6 +282,26 @@ class GlobalOptions(conf_base.Options):
                 help='Ephemeral disk data loss warning path, relative to the '
                      'ephemeral disk volume path. E.g.: '
                      'DATALOSS_WARNING_README.txt'),
+            cfg.BoolOpt(
+                'metadata_report_provisioning_started', default=False,
+                help='Reports to the metadata service that provisioning has '
+                     'started'),
+            cfg.BoolOpt(
+                'metadata_report_provisioning_completed', default=False,
+                help='Reports to the metadata service that provisioning '
+                     'completed or failed'),
+            cfg.StrOpt(
+                'instrumentation_class',
+                default=None,
+                help='Instrumentation class path'),
+            cfg.StrOpt(
+                'configuration_pass',
+                default=None,
+                choices=[constant.CONFIGURATION_PASS_SPECIALIZE,
+                         constant.CONFIGURATION_PASS_SETUP_COMPLETE,
+                         constant.CONFIGURATION_PASS_SERVICE,
+                         constant.CONFIGURATION_PASS_ERROR_HANDLER],
+                help='The configuration pass name'),
         ]
 
         self._cli_options = [
