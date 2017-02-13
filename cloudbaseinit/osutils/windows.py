@@ -1079,7 +1079,7 @@ class WindowsUtils(base.BaseOSUtils):
 
         return values
 
-    def _get_logical_drives(self):
+    def get_logical_drives(self):
         buf_size = self.MAX_PATH
         buf = ctypes.create_unicode_buffer(buf_size + 1)
         buf_len = kernel32.GetLogicalDriveStringsW(buf_size, buf)
@@ -1090,7 +1090,7 @@ class WindowsUtils(base.BaseOSUtils):
         return self._split_str_buf_list(buf, buf_len)
 
     def get_cdrom_drives(self):
-        drives = self._get_logical_drives()
+        drives = self.get_logical_drives()
         return [d for d in drives if kernel32.GetDriveTypeW(d) ==
                 self.DRIVE_CDROM]
 
