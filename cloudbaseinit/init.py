@@ -26,6 +26,7 @@ from cloudbaseinit.plugins.common import base as plugins_base
 from cloudbaseinit.plugins import factory as plugins_factory
 from cloudbaseinit.utils import log as logging
 from cloudbaseinit import version
+import time
 
 
 CONF = cloudbaseinit_conf.CONF
@@ -115,6 +116,19 @@ class InitManager(object):
                         break
 
         return reboot_required
+    
+    @staticmethod
+    def _exec_with_retry(action):
+        i = 0
+        while True:
+            try:
+                return action()
+            except Exception:
+                if i < CONF.retry_count:
+                    i += 1
+                    time.sleep(CONF.retry_count_interval)
+                else:
+                    raise
 
     @staticmethod
     def _reset_service_password_and_respawn(osutils):
@@ -151,9 +165,9 @@ class InitManager(object):
             arguments.insert(0, sys.executable)
 
         LOG.info("Respawning current process with updated credentials.")
-        token = osutils.create_user_logon_session(
+        token = InitManager._exec_with_retry(lambda: osutils.create_user_logon_session(
             service_user, service_password, service_domain,
-            logon_type=osutils.LOGON32_LOGON_BATCH)
+            logon_type=osutils.LOGON32_LOGON_BATCH))
         exit_code = osutils.execute_process_as_user(token, arguments)
         LOG.info("Process execution ended with exit code: %s", exit_code)
         sys.exit(exit_code)
