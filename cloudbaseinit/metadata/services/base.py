@@ -160,6 +160,9 @@ class BaseMetadataService(object):
     def get_vm_agent_package_provisioning_data(self):
         pass
 
+    def get_winrm_listeners_configuration(self):
+        pass
+
     def get_client_auth_certs(self):
         pass
 
