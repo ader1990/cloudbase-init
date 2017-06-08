@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import six
 
 from oslo_log import log as oslo_logging
@@ -45,3 +46,14 @@ def hex_to_bytes(value):
         return value.decode("hex")
     else:
         return bytes.fromhex(value)
+
+
+def base64_to_string(value):
+    return base64.b64decode(value)
+
+
+def _get_decoded_mime_part_payload(part):
+    payload = part.get_payload()
+    if part.__getitem__('Content-Transfer-Encoding').lower() == 'base64':
+        payload = base64_to_string(payload)
+    return payload

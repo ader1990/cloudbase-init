@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import os
 import unittest
 
@@ -39,6 +40,8 @@ class PartHandlerPluginTests(unittest.TestCase):
         mock_gettempdir.return_value = 'fake_directory'
         mock_load_module.return_value = mock_part_handler
         mock_part_handler.list_types.return_value = ['fake part']
+        mock_part.__getitem__.return_value = 'base64'
+        mock_part.get_payload.return_value = base64.b64encode(b'fake data')
 
         response = self._parthandler.process(mock_part)
 
@@ -46,10 +49,12 @@ class PartHandlerPluginTests(unittest.TestCase):
         part_handler_path = os.path.join(mock_gettempdir.return_value,
                                          mock_part.get_filename.return_value)
         mock_write_file.assert_called_once_with(
-            part_handler_path, mock_part.get_payload.return_value)
+            part_handler_path, b'fake data')
 
         mock_load_module.assert_called_once_with(os.path.join(
             'fake_directory', 'fake_name'))
         mock_part_handler.list_types.assert_called_once_with()
         self.assertEqual({'fake part': mock_part_handler.handle_part},
                          response)
+        mock_part.__getitem__.assert_called_once_with(
+            'Content-Transfer-Encoding')

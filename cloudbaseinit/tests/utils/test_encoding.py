@@ -58,3 +58,7 @@ class TestEncoding(unittest.TestCase):
     def test_hex_to_bytes(self):
         result = encoding.hex_to_bytes("66616b652064617461")
         self.assertEqual(result, b"fake data")
+
+    def test_base64_to_string(self):
+        result = encoding.base64_to_string("ZmFrZSBkYXRh")
+        self.assertEqual(result, b"fake data")

@@ -22,6 +22,7 @@ from cloudbaseinit.plugins.common.userdataplugins import base
 from cloudbaseinit.plugins.common.userdataplugins.cloudconfigplugins import (
     factory
 )
+from cloudbaseinit.utils import encoding
 
 
 CONF = cloudbaseinit_conf.CONF
@@ -105,5 +106,5 @@ class CloudConfigPlugin(base.BaseUserDataPlugin):
             return executor.execute()
 
     def process(self, part):
-        payload = part.get_payload()
+        payload = encoding._get_decoded_mime_part_payload(part)
         return self.process_non_multipart(payload)

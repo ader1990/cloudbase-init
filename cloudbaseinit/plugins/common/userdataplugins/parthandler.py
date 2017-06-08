@@ -29,7 +29,8 @@ class PartHandlerPlugin(base.BaseUserDataPlugin):
     def process(self, part):
         temp_dir = tempfile.gettempdir()
         part_handler_path = os.path.join(temp_dir, part.get_filename())
-        encoding.write_file(part_handler_path, part.get_payload())
+        payload = encoding._get_decoded_mime_part_payload(part)
+        encoding.write_file(part_handler_path, payload)
 
         part_handler = classloader.ClassLoader().load_module(part_handler_path)
 

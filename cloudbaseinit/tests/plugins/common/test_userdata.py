@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import os
 import pkgutil
 import tempfile
@@ -194,7 +195,8 @@ class UserDataPluginTest(unittest.TestCase):
                 '.get_plugin_return_value')
     def _test_process_part(self, mock_get_plugin_return_value,
                            mock_add_part_handlers,
-                           handler_func, user_data_plugin, content_type):
+                           handler_func, user_data_plugin, content_type,
+                           is_base64=False):
         mock_part = mock.MagicMock()
         mock_user_data_plugins = mock.MagicMock()
         mock_user_handlers = mock.MagicMock()
@@ -206,6 +208,9 @@ class UserDataPluginTest(unittest.TestCase):
         else:
             _content_type = 'other content type'
             mock_part.get_content_type.return_value = _content_type
+        if handler_func and is_base64:
+            mock_part.get_payload.return_value = base64.b64encode(b'fake data')
+            mock_part.__getitem__.return_value = 'base64'
 
         response = self._userdata._process_part(
             part=mock_part, user_data_plugins=mock_user_data_plugins,
@@ -214,10 +219,14 @@ class UserDataPluginTest(unittest.TestCase):
         mock_user_handlers.get.assert_called_once_with(
             _content_type)
         if handler_func:
-            handler_func.assert_called_once_with(None, _content_type,
-                                                 mock_part.get_filename(),
-                                                 mock_part.get_payload())
-
+            if is_base64:
+                handler_func.assert_called_once_with(None, _content_type,
+                                                     mock_part.get_filename(),
+                                                     b'fake data')
+            else:
+                handler_func.assert_called_once_with(None, _content_type,
+                                                     mock_part.get_filename(),
+                                                     mock_part.get_payload())
             self.assertEqual(1, mock_part.get_content_type.call_count)
             self.assertEqual(2, mock_part.get_filename.call_count)
         else:
@@ -237,6 +246,12 @@ class UserDataPluginTest(unittest.TestCase):
         handler_func = mock.MagicMock()
         self._test_process_part(handler_func=handler_func,
                                 user_data_plugin=None, content_type=False)
+
+    def test_process_part_base64(self):
+        handler_func = mock.MagicMock()
+        self._test_process_part(handler_func=handler_func,
+                                user_data_plugin=None, content_type=False,
+                                is_base64=True)
 
     def test_process_part_no_handler_func(self):
         user_data_plugin = mock.MagicMock()

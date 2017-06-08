@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import os
 import unittest
 
@@ -38,7 +39,7 @@ class ShellScriptPluginTests(unittest.TestCase):
     @mock.patch('cloudbaseinit.utils.encoding.write_file')
     def _test_process(self, mock_write_file, mock_exec_file, mock_gettempdir,
                       mock_get_os_utils, mock_os_remove,
-                      mock_path_exists, exception=False):
+                      mock_path_exists, exception=False, use_base64=False):
 
         mock_path_exists.return_value = True
         fake_dir_path = os.path.join("fake", "dir")
@@ -49,6 +50,11 @@ class ShellScriptPluginTests(unittest.TestCase):
         mock_get_os_utils.return_value = mock_osutils
         fake_target = os.path.join(fake_dir_path, "fake_filename")
         mock_exec_file.return_value = 'fake response'
+        part_payload = mock_part.get_payload.return_value
+        if use_base64:
+            mock_part.get_payload.return_value = base64.b64encode(b"fake data")
+            mock_part.__getitem__.return_value = 'base64'
+            part_payload = b'fake data'
 
         if exception:
             mock_exec_file.side_effect = [Exception]
@@ -61,7 +67,7 @@ class ShellScriptPluginTests(unittest.TestCase):
 
         mock_part.get_filename.assert_called_once_with()
         mock_write_file.assert_called_once_with(
-            fake_target, mock_part.get_payload.return_value)
+            fake_target, part_payload)
         mock_exec_file.assert_called_once_with(fake_target)
         mock_part.get_payload.assert_called_once_with()
         mock_gettempdir.assert_called_once_with()
@@ -76,6 +82,9 @@ class ShellScriptPluginTests(unittest.TestCase):
 
     def test_process(self):
         self._test_process(exception=False)
+
+    def test_process_base64(self):
+        self._test_process(exception=False, use_base64=True)
 
     def test_process_exception(self):
         self._test_process(exception=True)

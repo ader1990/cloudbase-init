@@ -133,8 +133,9 @@ class UserDataPlugin(base.BasePlugin):
             if handler_func:
                 LOG.debug("Calling user part handler for content type: %s" %
                           content_type)
+                payload = encoding._get_decoded_mime_part_payload(part)
                 handler_func(None, content_type, part.get_filename(),
-                             part.get_payload())
+                             payload)
             else:
                 user_data_plugin = user_data_plugins.get(content_type)
                 if not user_data_plugin:

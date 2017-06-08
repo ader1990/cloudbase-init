@@ -36,7 +36,8 @@ class ShellScriptPlugin(base.BaseUserDataPlugin):
         target_path = os.path.join(tempfile.gettempdir(), file_name)
 
         try:
-            encoding.write_file(target_path, part.get_payload())
+            payload = encoding._get_decoded_mime_part_payload(part)
+            encoding.write_file(target_path, payload)
 
             return fileexecutils.exec_file(target_path)
         except Exception as ex:

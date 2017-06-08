@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base64
 import os
 import sys
 import unittest
@@ -54,22 +55,35 @@ class HeatUserDataHandlerTests(unittest.TestCase):
                 '.HeatPlugin._check_dir')
     @mock.patch('cloudbaseinit.utils.encoding.write_file')
     def _test_process(self, mock_write_file, mock_check_dir,
-                      mock_execute_user_data_script, filename, payloads=False):
+                      mock_execute_user_data_script, filename, payloads=False,
+                      payload_base_64=False):
         mock_part = mock.MagicMock()
         mock_part.get_filename.return_value = filename
-        if payloads is True and sys.version_info < (3, 0):
-            mock_part.get_payload.return_value = filename.decode()
+        part_payload = mock.Mock()
+        if payloads is True:
+            if payload_base_64:
+                part_payload = base64.b64encode(b'payload data')
+                mock_part.__getitem__.return_value = 'base64'
+            elif sys.version_info < (3, 0):
+                part_payload = filename.decode()
+        mock_part.get_payload.return_value = part_payload
         response = self._heat.process(mock_part)
 
         path = os.path.join(CONF.heat_config_dir, filename)
         mock_check_dir.assert_called_once_with(path)
         mock_part.get_filename.assert_called_with()
-        mock_write_file.assert_called_once_with(
-            path, mock_part.get_payload.return_value)
+        if payload_base_64:
+            mock_write_file.assert_called_once_with(
+                path, base64.b64decode(part_payload))
+        else:
+            mock_write_file.assert_called_once_with(path, part_payload)
 
         if filename == self._heat._heat_user_data_filename:
-            mock_execute_user_data_script.assert_called_with(
-                mock_part.get_payload())
+            if payload_base_64:
+                mock_execute_user_data_script.assert_called_with(
+                    base64.b64decode(part_payload))
+            else:
+                mock_execute_user_data_script.assert_called_with(part_payload)
             self.assertEqual(mock_execute_user_data_script.return_value,
                              response)
         else:
@@ -84,3 +98,7 @@ class HeatUserDataHandlerTests(unittest.TestCase):
 
     def test_process_content_other_data(self):
         self._test_process(filename='other data')
+
+    def test_process_payload_base64(self):
+        self._test_process(filename=self._heat._heat_user_data_filename,
+                           payloads=True, payload_base_64=True)
