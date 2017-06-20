@@ -28,10 +28,10 @@ from cloudbaseinit.metadata.services.osconfigdrive import base
 from cloudbaseinit.tests import testutils
 
 
-class TestConfigDriveService(unittest.TestCase):
+class TestNoCloudConfigDriveService(unittest.TestCase):
 
     def setUp(self):
-        module_path = "cloudbaseinit.metadata.services.configdrive"
+        module_path = "cloudbaseinit.metadata.services.nocloud"
         self._win32com_mock = mock.MagicMock()
         self._ctypes_mock = mock.MagicMock()
         self._ctypes_util_mock = mock.MagicMock()
@@ -49,17 +49,18 @@ class TestConfigDriveService(unittest.TestCase):
         self.addCleanup(self._module_patcher.stop)
 
         self.configdrive_module = importlib.import_module(module_path)
-        self._config_drive = self.configdrive_module.ConfigDriveService()
+        self._config_drive = (
+            self.configdrive_module.NoCloudConfigDriveService())
         self.snatcher = testutils.LogSnatcher(module_path)
 
     def _test_preprocess_options(self, fail=False):
         if fail:
             with testutils.ConfPatcher("types", ["vfat", "ntfs"],
-                                       group="config_drive"):
+                                       group="nocloud"):
                 with self.assertRaises(exception.CloudbaseInitException):
                     self._config_drive._preprocess_options()
             with testutils.ConfPatcher("locations", ["device"],
-                                       group="config_drive"):
+                                       group="nocloud"):
                 with self.assertRaises(exception.CloudbaseInitException):
                     self._config_drive._preprocess_options()
             return
@@ -72,7 +73,7 @@ class TestConfigDriveService(unittest.TestCase):
             "types": ["vfat", "iso"],
             "locations": ["partition"]
         }
-        contexts = [testutils.ConfPatcher(key, value, group="config_drive")
+        contexts = [testutils.ConfPatcher(key, value, group="nocloud")
                     for key, value in options.items()]
         with contexts[0], contexts[1], contexts[2], \
                 contexts[3], contexts[4]:
@@ -101,7 +102,7 @@ class TestConfigDriveService(unittest.TestCase):
 
         mock_get_config_drive_manager.assert_called_once_with()
         mock_manager.get_config_drive_files.assert_called_once_with(
-            config_type=base.CONFIG_DRIVE,
+            config_type=base.NOCLOUD_CONFIG_DRIVE,
             searched_types=driveservice.CD_TYPES,
             searched_locations=driveservice.CD_LOCATIONS)
         self.assertTrue(response)

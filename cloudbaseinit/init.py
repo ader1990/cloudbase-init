@@ -65,7 +65,7 @@ class InitManager(object):
                 (status, reboot_required) = plugin.execute(service,
                                                            shared_data)
                 self._set_plugin_status(osutils, instance_id, plugin_name,
-                                            status)
+                                        status)
             except Exception as ex:
                 LOG.error('plugin \'%(plugin_name)s\' failed with error '
                           '\'%(ex)s\'', {'plugin_name': plugin_name, 'ex': ex})
