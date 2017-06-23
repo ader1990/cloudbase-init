@@ -22,5 +22,5 @@ class BaseCloudConfigPlugin(object):
     """Base plugin class for cloud-config plugins."""
 
     @abc.abstractmethod
-    def process(self, data):
+    def process(self, data, service=None):
         """Abstract method for processing the given data."""

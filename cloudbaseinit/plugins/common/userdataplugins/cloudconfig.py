@@ -67,7 +67,7 @@ class CloudConfigPluginExecutor(object):
 
         return cls(**content)
 
-    def execute(self):
+    def execute(self, service):
         """Call each plugin, in the order requested by the user."""
         reboot = execcmd.NO_REBOOT
         plugins = factory.load_plugins()
@@ -78,7 +78,7 @@ class CloudConfigPluginExecutor(object):
                 continue
 
             try:
-                requires_reboot = method(value)
+                requires_reboot = method(value, service)
                 if requires_reboot:
                     reboot = execcmd.RET_END
             except Exception:
@@ -91,7 +91,7 @@ class CloudConfigPlugin(base.BaseUserDataPlugin):
     def __init__(self):
         super(CloudConfigPlugin, self).__init__("text/cloud-config")
 
-    def process_non_multipart(self, part):
+    def process_non_multipart(self, part, service=None):
         """Process the given data, if it can be loaded through yaml.
 
         If any plugin requires a reboot, it will return a particular
@@ -102,8 +102,8 @@ class CloudConfigPlugin(base.BaseUserDataPlugin):
         except CloudConfigError:
             LOG.error("Could not process the type %r", type(part))
         else:
-            return executor.execute()
+            return executor.execute(service)
 
-    def process(self, part):
+    def process(self, part, service=None):
         payload = part.get_payload()
-        return self.process_non_multipart(payload)
+        return self.process_non_multipart(payload, service)

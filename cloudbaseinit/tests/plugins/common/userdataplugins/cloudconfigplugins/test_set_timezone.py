@@ -51,4 +51,4 @@ class TestSetTimezone(unittest.TestCase):
         plugin = cloudconfig.CloudConfigPlugin()
         plugin.process_non_multipart("set_timezone: America Standard Time")
 
-        mock_process_plugin.assert_called_once_with("America Standard Time")
+        mock_process_plugin.assert_called_once_with("America Standard Time", None)

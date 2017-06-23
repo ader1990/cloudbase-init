@@ -37,7 +37,7 @@ class SetTimezonePlugin(base.BaseCloudConfigPlugin):
 
     """
 
-    def process(self, data):
+    def process(self, data, service=None):
         LOG.info("Changing timezone to %r", data)
         osutils = factory.get_os_utils()
         osutils.set_timezone(data)

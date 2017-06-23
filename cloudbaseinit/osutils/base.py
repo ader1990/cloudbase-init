@@ -69,7 +69,10 @@ class BaseOSUtils(object):
     def add_user_to_local_group(self, username, groupname):
         raise NotImplementedError()
 
-    def set_host_name(self, new_host_name):
+    def get_host_name(self, fqdn=False):
+        raise NotImplementedError()
+
+    def set_host_name(self, new_host_name, fqdn=False):
         raise NotImplementedError()
 
     def get_user_home(self, username):

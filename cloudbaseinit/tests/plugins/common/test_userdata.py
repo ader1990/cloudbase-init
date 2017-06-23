@@ -172,7 +172,7 @@ class UserDataPluginTest(unittest.TestCase):
                                                       mock_load_plugins(), {})
             self.assertEqual((base.PLUGIN_EXECUTION_DONE, reboot), response)
         else:
-            mock_process_non_multi_part.assert_called_once_with(user_data)
+            mock_process_non_multi_part.assert_called_once_with(user_data, None)
             self.assertEqual(mock_process_non_multi_part.return_value,
                              response)
 
@@ -355,7 +355,7 @@ class UserDataPluginTest(unittest.TestCase):
         mock_load_plugins.assert_called_once_with()
         (mock_cloud_config_plugin
          .process_non_multipart
-         .assert_called_once_with(user_data))
+         .assert_called_once_with(user_data, None))
         self.assertEqual(status, 1)
         self.assertFalse(reboot)
 

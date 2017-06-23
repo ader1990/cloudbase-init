@@ -144,7 +144,7 @@ class WriteFilesPlugin(base.BaseCloudConfigPlugin):
         permissions = _convert_permissions(item.get('permissions'))
         _write_file(path, content, permissions)
 
-    def process(self, data):
+    def process(self, data, service=None):
         """Process the given data received from the cloud-config userdata.
 
         It knows to process only lists and dicts.
