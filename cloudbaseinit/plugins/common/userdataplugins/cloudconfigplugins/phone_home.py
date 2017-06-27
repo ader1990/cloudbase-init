@@ -12,7 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import json
+
 from oslo_log import log as oslo_logging
+from six.moves.urllib import error
 
 from cloudbaseinit.osutils import factory
 from cloudbaseinit.plugins.common.userdataplugins.cloudconfigplugins import (
@@ -49,17 +52,19 @@ class PhoneHomePlugin(base.BaseCloudConfigPlugin):
         phone_home_post_body = {}
 
         phone_home_url = data.get('url')
-        phone_home_post_body = data.get('post')
+        phone_home_post = data.get('post')
         phone_home_retries = data.get('tries')
 
         phone_home_available_data = {}
         phone_home_available_data['instance_id'] = service.get_instance_id()
-        phone_home_available_data['hostname'] = osutils.get_hostname()
-        phone_home_available_data['fqdn'] = osutils.get_hostname(fqdn=True)
+        phone_home_available_data['hostname'] = osutils.get_host_name()
+        phone_home_available_data['fqdn'] = osutils.get_host_name(fqdn=True)
         if not phone_home_url:
             LOG.debug("Phone home url not present. Insufficient data to phone home.")
             return
-        phone_home_url = phone_home_url.replace('$INSTANCE_ID', phone_home_available_data.get('instance_id'))
+        instance_id = phone_home_available_data.get('instance_id')
+        if instance_id:
+            phone_home_url = phone_home_url.replace('$INSTANCE_ID', instance_id)
 
         if not phone_home_retries:
             phone_home_retries = CONF.default.phone_home_retries

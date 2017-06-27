@@ -26,6 +26,10 @@ PLUGINS = {
                     'cloudconfigplugins.set_hostname.SetHostnamePlugin',
     'set_fqdn': 'cloudbaseinit.plugins.common.userdataplugins.'
                 'cloudconfigplugins.set_fqdn.SetFQDNPlugin',
+    'hostname': 'cloudbaseinit.plugins.common.userdataplugins.'
+                    'cloudconfigplugins.set_hostname.SetHostnamePlugin',
+    'fqdn': 'cloudbaseinit.plugins.common.userdataplugins.'
+                'cloudconfigplugins.set_fqdn.SetFQDNPlugin',
     'phone_home': 'cloudbaseinit.plugins.common.userdataplugins.'
                     'cloudconfigplugins.phone_home.PhoneHomePlugin',
 }

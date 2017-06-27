@@ -62,7 +62,7 @@ def set_hostname(osutils, hostname):
         reboot_required = osutils.set_host_name(hostname)
 
     current_fqdn = osutils.get_host_name(fqdn=True).lower()
-    if current_fqdn == '.'.join([hostname, primary_dns]).lower():
+    if (not primary_dns) or current_fqdn == '.'.join([hostname, primary_dns]).lower():
         LOG.debug("FQDN already set to: %s" % primary_dns)
     else:
         LOG.info("Setting FQDN: %s" % primary_dns)

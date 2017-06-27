@@ -677,6 +677,8 @@ class WindowsUtils(base.BaseOSUtils):
         if not ret_val:
             raise exception.WindowsCloudbaseInitException(
                 "Cannot set dns primary suffix: %r")
+        return True
+
 
     def set_host_name(self, new_host_name):
         ret_val = kernel32.SetComputerNameExW(

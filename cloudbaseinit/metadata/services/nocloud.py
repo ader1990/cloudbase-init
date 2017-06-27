@@ -31,6 +31,8 @@ class NoCloudConfigDriveService(driveservice.DriveService,
     def __init__(self):
         super(NoCloudConfigDriveService, self).__init__(
             config_type=basecd.NOCLOUD_CONFIG_DRIVE)
+        self._https_ca_bundle = None
+        self._https_allow_insecure = True
 
     def get_user_data(self):
         return self._get_cache_data("user-data")
