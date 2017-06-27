@@ -12,30 +12,25 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-import shutil
 import yaml
 
 from oslo_log import log as oslo_logging
 
 from cloudbaseinit import conf as cloudbaseinit_conf
-from cloudbaseinit import constant
-from cloudbaseinit import exception
-from cloudbaseinit.metadata.services import base
-from cloudbaseinit.metadata.services.osconfigdrive import factory
+from cloudbaseinit.metadata.services import driveservice
+from cloudbaseinit.metadata.services import ec2service
+from cloudbaseinit.metadata.services.osconfigdrive import base as basecd
 
-CONF = cloudbaseinit_conf.CONF
 LOG = oslo_logging.getLogger(__name__)
-
-CD_TYPES = constant.CD_TYPES
-CD_LOCATIONS = constant.CD_LOCATIONS
+CONF = cloudbaseinit_conf.CONF
 
 
-class NoCloudConfigDriveService(base.BaseMetadataService):
+class NoCloudConfigDriveService(driveservice.DriveService,
+                                ec2service.EC2Service):
 
     def __init__(self):
-        super(NoCloudConfigDriveService, self).__init__()
-        self._metadata_path = None
+        super(NoCloudConfigDriveService, self).__init__(
+            config_type=basecd.NOCLOUD_CONFIG_DRIVE)
 
     def get_user_data(self):
         return self._get_cache_data("user-data")
@@ -44,48 +39,28 @@ class NoCloudConfigDriveService(base.BaseMetadataService):
         data = self._get_cache_data("meta-data", decode=True)
         if data:
             return yaml.load(data)
+        return dict()
 
-    def _preprocess_options(self):
+    def _get_config_options(self):
         self._searched_types = set(CONF.nocloud.types)
         self._searched_locations = set(CONF.nocloud.locations)
 
         # Deprecation backward compatibility.
-        if CONF.config_drive.raw_hdd:
+        if CONF.nocloud.raw_hdd:
             self._searched_types.add("iso")
             self._searched_locations.add("hdd")
-        if CONF.config_drive.cdrom:
+        if CONF.nocloud.cdrom:
             self._searched_types.add("iso")
             self._searched_locations.add("cdrom")
-        if CONF.config_drive.vfat:
+        if CONF.nocloud.vfat:
             self._searched_types.add("vfat")
             self._searched_locations.add("hdd")
 
-        # Check for invalid option values.
-        if self._searched_types | CD_TYPES != CD_TYPES:
-            raise exception.CloudbaseInitException(
-                "Invalid Config Drive types %s", self._searched_types)
-        if self._searched_locations | CD_LOCATIONS != CD_LOCATIONS:
-            raise exception.CloudbaseInitException(
-                "Invalid Config Drive locations %s", self._searched_locations)
+    def get_host_name(self):
+        return self._get_meta_data().get('local-hostname')
 
-    def load(self):
-        super(NoCloudConfigDriveService, self).load()
+    def get_instance_id(self):
+        return self._get_meta_data().get('instance-id')
 
-        self._preprocess_options()
-        self._mgr = factory.get_config_drive_manager()
-        found = self._mgr.get_config_drive_files(
-            searched_types=self._searched_types,
-            searched_locations=self._searched_locations)
-
-        if found:
-            self._metadata_path = self._mgr.target_path
-            LOG.debug('Metadata copied to folder: %r', self._metadata_path)
-        return found
-
-    def _get_data(self, path):
-        norm_path = os.path.normpath(os.path.join(self._metadata_path, path))
-        try:
-            with open(norm_path, 'rb') as stream:
-                return stream.read()
-        except IOError:
-            raise base.NotExistingMetadataException()
+    def get_public_keys(self):
+        return self._get_meta_data().get('public-keys')
