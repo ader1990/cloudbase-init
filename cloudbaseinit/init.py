@@ -55,8 +55,7 @@ class InitManager(object):
         reboot_required = None
         success = True
         status = None
-        if instance_id is not None:
-            status = self._get_plugin_status(osutils, instance_id, plugin_name)
+        status = self._get_plugin_status(osutils, instance_id, plugin_name)
         if status == plugins_base.PLUGIN_EXECUTION_DONE:
             LOG.debug('Plugin \'%s\' execution already done, skipping',
                       plugin_name)
@@ -65,8 +64,7 @@ class InitManager(object):
             try:
                 (status, reboot_required) = plugin.execute(service,
                                                            shared_data)
-                if instance_id is not None:
-                    self._set_plugin_status(osutils, instance_id, plugin_name,
+                self._set_plugin_status(osutils, instance_id, plugin_name,
                                             status)
             except Exception as ex:
                 LOG.error('plugin \'%(plugin_name)s\' failed with error '
