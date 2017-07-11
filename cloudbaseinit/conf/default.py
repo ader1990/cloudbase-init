@@ -160,6 +160,8 @@ class GlobalOptions(conf_base.Options):
             cfg.ListOpt(
                 'metadata_services',
                 default=[
+                    'cloudbaseinit.metadata.services'
+                    '.nocloud.NoCloudConfigDriveService',
                     'cloudbaseinit.metadata.services.httpservice.HttpService',
                     'cloudbaseinit.metadata.services'
                     '.configdrive.ConfigDriveService',
