@@ -296,3 +296,47 @@ class TestNetworkConfigPlugin(unittest.TestCase):
 
     def test_execute_missing_gateway(self):
         self._test_execute_missing_smth(gateway=True)
+
+    @mock.patch("cloudbaseinit.osutils.factory.get_os_utils")
+    def _test_execute_advanced_networking(self, mock_get_os_utils,
+                                          network_details):
+        mock_service = mock.Mock()
+        mock_shared_data = mock.Mock()
+        osutils = mock_get_os_utils()
+        osutils.configure_l2_networking.return_value = True
+        osutils.configure_l3_networking.return_value = True
+        osutils.configure_l4_networking.return_value = True
+        mock_service.get_network_details.return_value = network_details
+
+        network_execute = functools.partial(
+            self._network_plugin.execute,
+            mock_service, mock_shared_data
+        )
+        result = network_execute()
+
+        reboot_required = True
+        if not network_details:
+            reboot_required = False
+        else:
+            if network_details.network_l2_config:
+                osutils.configure_l2_networking.assert_called_once_with(
+                    network_details.network_l2_config)
+            if network_details.network_l3_config:
+                osutils.configure_l3_networking.assert_called_once_with(
+                    network_details.network_l3_config)
+            if network_details.network_l4_config:
+                osutils.configure_l4_networking.assert_called_once_with(
+                    network_details.network_l4_config)
+        self.assertEqual(result, (plugin_base.PLUGIN_EXECUTION_DONE,
+                                  reboot_required))
+
+    def test_execute_no_network_data(self):
+        self._test_execute_advanced_networking(network_details=None)
+
+    def test_execute_advanced_networking(self):
+        network_details = service_base.AdvancedNetworkDetails(
+            network_l2_config="fake l2 data",
+            network_l3_config="fake l3 data",
+            network_l4_config="fake l4 data"
+        )
+        self._test_execute_advanced_networking(network_details=network_details)

@@ -119,54 +119,73 @@ def _preprocess_nics(network_details, network_adapters):
     return refined_network_details
 
 
+def _configure_legacy_network_details(osutils, network_details):
+    reboot_required = False
+    # Check and save NICs by MAC.
+    network_adapters = osutils.get_network_adapters()
+    network_details = _preprocess_nics(network_details,
+                                       network_adapters)
+    macnics = {}
+    for nic in network_details:
+        # Assuming that the MAC address is unique.
+        macnics[nic.mac] = nic
+
+    # Try configuring all the available adapters.
+    adapter_macs = [pair[1] for pair in network_adapters]
+    configured = False
+    for mac in adapter_macs:
+        nic = macnics.pop(mac, None)
+        if not nic:
+            LOG.warn("Missing details for adapter %s", mac)
+            continue
+        LOG.info("Configuring network adapter %s", mac)
+        reboot = osutils.set_static_network_config(
+            mac,
+            nic.address,
+            nic.netmask,
+            nic.broadcast,
+            nic.gateway,
+            nic.dnsnameservers
+        )
+        reboot_required = reboot or reboot_required
+        # Set v6 info too if available.
+        if nic.address6 and nic.netmask6:
+            osutils.set_static_network_config_v6(
+                mac,
+                nic.address6,
+                nic.netmask6,
+                nic.gateway6
+            )
+        configured = True
+    for mac in macnics:
+        LOG.warn("Details not used for adapter %s", mac)
+    if not configured:
+        LOG.error("No adapters were configured")
+    return reboot_required
+
+
 class NetworkConfigPlugin(plugin_base.BasePlugin):
 
     def execute(self, service, shared_data):
         osutils = osutils_factory.get_os_utils()
         network_details = service.get_network_details()
+
+        reboot_required = False
         if not network_details:
             return plugin_base.PLUGIN_EXECUTION_DONE, False
 
-        # Check and save NICs by MAC.
-        network_adapters = osutils.get_network_adapters()
-        network_details = _preprocess_nics(network_details,
-                                           network_adapters)
-        macnics = {}
-        for nic in network_details:
-            # Assuming that the MAC address is unique.
-            macnics[nic.mac] = nic
-
-        # Try configuring all the available adapters.
-        adapter_macs = [pair[1] for pair in network_adapters]
-        reboot_required = False
-        configured = False
-        for mac in adapter_macs:
-            nic = macnics.pop(mac, None)
-            if not nic:
-                LOG.warn("Missing details for adapter %s", mac)
-                continue
-            LOG.info("Configuring network adapter %s", mac)
-            reboot = osutils.set_static_network_config(
-                mac,
-                nic.address,
-                nic.netmask,
-                nic.broadcast,
-                nic.gateway,
-                nic.dnsnameservers
-            )
-            reboot_required = reboot or reboot_required
-            # Set v6 info too if available.
-            if nic.address6 and nic.netmask6:
-                osutils.set_static_network_config_v6(
-                    mac,
-                    nic.address6,
-                    nic.netmask6,
-                    nic.gateway6
-                )
-            configured = True
-        for mac in macnics:
-            LOG.warn("Details not used for adapter %s", mac)
-        if not configured:
-            LOG.error("No adapters were configured")
+        if isinstance(network_details, service_base.AdvancedNetworkDetails):
+            if network_details.network_l2_config:
+                reboot_required = osutils.configure_l2_networking(
+                    network_details.network_l2_config)
+            if network_details.network_l3_config:
+                reboot_required = osutils.configure_l3_networking(
+                    network_details.network_l3_config) or reboot_required
+            if network_details.network_l4_config:
+                reboot_required = osutils.configure_l4_networking(
+                    network_details.network_l4_config) or reboot_required
+        else:
+            reboot_required = _configure_legacy_network_details(
+                osutils, network_details)
 
         return plugin_base.PLUGIN_EXECUTION_DONE, reboot_required
