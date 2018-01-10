@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import json
 import netaddr
 import os
@@ -148,7 +149,7 @@ class MaaSHttpService(base.BaseHTTPMetadataService):
         for link in network_data['config']:
             if link.get('type') in ['nameserver']:
                 continue
-            parsed_link = base.L2NetworkDetails.copy()
+            parsed_link = copy.deepcopy(base.L2NetworkDetails)
             if link.get('id'):
                 parsed_link['name'] = link['id']
             if link.get('type'):
@@ -177,7 +178,7 @@ class MaaSHttpService(base.BaseHTTPMetadataService):
             if not network_config.get('subnets'):
                 continue
             for subnet in network_config.get('subnets'):
-                parsed_network = base.L3NetworkDetails.copy()
+                parsed_network = copy.deepcopy(base.L3NetworkDetails)
                 parsed_network["id"] = network_config.get('name')
                 parsed_network["name"] = network_config.get('name')
                 parsed_network["link_name"] = network_config.get('name')
