@@ -1668,7 +1668,7 @@ class WindowsUtils(base.BaseOSUtils):
     def _config_bond_link(self, bond_link):
         bond_info = bond_link.get('extra_info').get('bond_info')
         self.new_lbfo_team(mac_address = bond_link.get('mac_address'),
-                           team_members=bond_info.get('bond_members'),
+                           team_members=bond_info.get('bond_members_mac'),
                            team_name=bond_link.get('name'),
                            teaming_mode=bond_info.get('bond_mode'))
         LOG.debug('Bond {} configured'.format(bond_link.get('name')))
@@ -1680,8 +1680,11 @@ class WindowsUtils(base.BaseOSUtils):
         netLbfoTeam.Name = team_name
         netLbfoTeam.TeamingMode  = lbfo_teaming_mode
         netLbfoTeam.LoadBalancingAlgorithm  = network.LBFO_BOND_ALGORITHM_L2_L3
+        team_members_name = []
+        for team_member in team_members:
+            team_members_name.append(self._get_network_adapter(team_member).NetConnectionID)
         primary_network_adapter_name = self._get_network_adapter(mac_address).NetConnectionID
-        team_members.remove(primary_network_adapter_name)
+        team_members_name.remove(primary_network_adapter_name)
         custom_options = [
             {'name': 'TeamMembers',
              'value_type': mi.MI_ARRAY | mi.MI_STRING,
@@ -1697,7 +1700,7 @@ class WindowsUtils(base.BaseOSUtils):
                                                                     lbfo_teaming_mode))
         netLbfoTeam.put(operation_options=operation_options)
 
-        for team_member in team_members:
+        for team_member in team_members_name:
             netLbfoTeamMember = conn.MSFT_NetLbfoTeamMember.new()
             netLbfoTeamMember.Team = team_name
             custom_options = [

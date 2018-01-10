@@ -68,6 +68,7 @@ L2NetworkDetails = {
     'extra_info': {
         'bond_info': {
             'bond_members': None,
+            'bond_members_mac': None,
             'bond_mode': None
         },
         'vlan_info': {

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import json
 import netaddr
 import os
@@ -145,10 +146,11 @@ class MaaSHttpService(base.BaseHTTPMetadataService):
         if not network_data:
             return None
         parsed_links = []
+        phy_links = {}
         for link in network_data['config']:
             if link.get('type') in ['nameserver']:
                 continue
-            parsed_link = base.L2NetworkDetails.copy()
+            parsed_link = copy.deepcopy(base.L2NetworkDetails)
             if link.get('id'):
                 parsed_link['name'] = link['id']
             if link.get('type'):
@@ -161,11 +163,17 @@ class MaaSHttpService(base.BaseHTTPMetadataService):
                 elif link['type'] == 'bond':
                     parsed_link['type'] = link['type']
                     parsed_link['extra_info']['bond_info']['bond_members'] = link['bond_interfaces']
+                    parsed_link['extra_info']['bond_info']['bond_members_mac'] = []
+                    for bond_member_name in link['bond_interfaces']:
+                        if phy_links.get(bond_member_name):
+                            parsed_link['extra_info']['bond_info']['bond_members_mac'].append(phy_links.get(bond_member_name))
                     parsed_link['extra_info']['bond_info']['bond_mode'] = link['params']['bond-mode']
             if link.get('mtu'):
                 parsed_link['mtu'] = link['mtu']
             if link.get('mac_address'):
                 parsed_link['mac_address'] = link['mac_address'].upper()
+            if parsed_link['type'] == 'phy':
+                phy_links[parsed_link['name']] = parsed_link['mac_address']
             parsed_links.append(parsed_link)
         return parsed_links
 
@@ -177,7 +185,7 @@ class MaaSHttpService(base.BaseHTTPMetadataService):
             if not network_config.get('subnets'):
                 continue
             for subnet in network_config.get('subnets'):
-                parsed_network = base.L3NetworkDetails.copy()
+                parsed_network = copy.deepcopy(base.L3NetworkDetails)
                 parsed_network["id"] = network_config.get('name')
                 parsed_network["name"] = network_config.get('name')
                 parsed_network["link_name"] = network_config.get('name')
