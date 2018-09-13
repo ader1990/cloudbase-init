@@ -129,6 +129,10 @@ class BaseMetadataService(object):
         """Get a list of space-stripped strings as public keys."""
         pass
 
+    def get_encryption_public_keys(self):
+        """Get a list of space-stripped strings as public keys."""
+        return self.get_public_keys()
+
     def get_network_details(self):
         """Return a list of `NetworkDetails` objects.
 
