@@ -88,7 +88,7 @@ class PacketService(base.BaseHTTPMetadataService):
             return []
         return list(set((key.strip() for key in ssh_keys)))
 
-    def get_encryption_public_key(self):
+    def get_encryption_public_keys(self):
         path = self._get_meta_data().get("phone_home_url")
         url = requests.compat.urljoin('{}/'.format(path), "key")
         try:
@@ -98,7 +98,7 @@ class PacketService(base.BaseHTTPMetadataService):
             LOG.debug("Data not found at URL %(url)r: %(reason)r",
                       {"url": url, "reason": exc})
             return False
-        return encoding.get_as_string(raw_data)
+        return [encoding.get_as_string(raw_data)]
 
     def get_user_data(self):
         """Get the available user data for the current instance."""
