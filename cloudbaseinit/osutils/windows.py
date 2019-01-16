@@ -39,6 +39,7 @@ import winerror
 from cloudbaseinit import exception
 from cloudbaseinit.osutils import base
 from cloudbaseinit.utils import classloader
+from cloudbaseinit.utils.retry_decorator import retry_decorator
 from cloudbaseinit.utils.windows import disk
 from cloudbaseinit.utils.windows import network
 from cloudbaseinit.utils.windows import privilege
@@ -757,39 +758,33 @@ class WindowsUtils(base.BaseOSUtils):
 
         return iface_index_list[0]["friendly_name"]
 
+    @retry_decorator()
     def set_network_adapter_mtu(self, name, mtu):
         if not self.check_os_version(6, 0):
             raise exception.CloudbaseInitException(
                 'Setting the MTU is currently not supported on Windows XP '
                 'and Windows Server 2003')
 
-        iface_index_list = [
-            net_addr["interface_index"] for net_addr
-            in network.get_adapter_addresses()
-            if net_addr["friendly_name"] == name]
+        WindowsUtils._wait_for_nic(name)
 
-        if not iface_index_list:
-            raise exception.ItemNotFoundException(
-                'Network interface with name "%s" not found' %
-                name)
-        else:
-            iface_index = iface_index_list[0]
+        LOG.debug('Setting MTU for interface "%(name)s" with '
+                  'value "%(mtu)s"',
+                  {'name': name, 'mtu': mtu})
 
-            LOG.debug('Setting MTU for interface "%(name)s" with '
-                      'value "%(mtu)s"',
-                      {'name': name, 'mtu': mtu})
+        base_dir = self._get_system_dir()
+        netsh_path = os.path.join(base_dir, 'netsh.exe')
 
-            base_dir = self._get_system_dir()
-            netsh_path = os.path.join(base_dir, 'netsh.exe')
-
-            args = [netsh_path, "interface", "ipv4", "set", "subinterface",
-                    str(iface_index), "mtu=%s" % mtu,
-                    "store=persistent"]
-            (out, err, ret_val) = self.execute_process(args, shell=False)
-            if ret_val:
-                raise exception.CloudbaseInitException(
-                    'Setting MTU for interface "%(name)s" with '
-                    'value "%(mtu)s" failed' % {'name': name, 'mtu': mtu})
+        args = [netsh_path, "interface", "ipv4", "set", "subinterface",
+                str(name), "mtu=%s" % mtu,
+                "store=persistent"]
+        (out, err, ret_val) = self.execute_process(args, shell=False)
+        if ret_val:
+            raise exception.CloudbaseInitException(
+                'Setting MTU for interface "%(name)s" with '
+                'value "%(mtu)s" failed with error "%(err)s" with out '
+                '"%(out)s" with retval "%(ret_val)s"'
+                % {'name': name, 'mtu': mtu, 'out': out,
+                   'err': err, 'ret_val': ret_val})
 
     def rename_network_adapter(self, old_name, new_name):
         base_dir = self._get_system_dir()
@@ -849,19 +844,40 @@ class WindowsUtils(base.BaseOSUtils):
         return reboot_required
 
     @staticmethod
+    def _wait_for_nic(nic_name):
+        conn = wmi.WMI(moniker='//./root/cimv2')
+        max_count = 1
+        i = 0
+        while True:
+            if len(conn.Win32_NetworkAdapter(NetConnectionID=nic_name)):
+                break
+            else:
+                i += 1
+                if i >= max_count:
+                    raise exception.ItemNotFoundException(
+                        "Cannot find team NIC: %s" % nic_name)
+                LOG.debug("Waiting for team NIC: %s", nic_name)
+                time.sleep(1)
+
+    @staticmethod
     def _fix_network_adapter_dhcp(interface_name, enable_dhcp, address_family):
-        interface_id = WindowsUtils._get_network_adapter(interface_name).GUID
+        interface = WindowsUtils._get_network_adapter(interface_name)
         tcpip_key = "Tcpip6" if address_family == AF_INET6 else "Tcpip"
 
         with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 "SYSTEM\\CurrentControlSet\\services\\%(tcpip_key)s\\"
                 "Parameters\\Interfaces\\%(interface_id)s" %
-                {"tcpip_key": tcpip_key, "interface_id": interface_id},
+                {"tcpip_key": tcpip_key, "interface_id": interface.GUID},
                 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(
                 key, 'EnableDHCP', 0, winreg.REG_DWORD,
                 1 if enable_dhcp else 0)
+
+        interface.disable()
+        WindowsUtils._wait_for_nic(interface_name)
+        interface.enable()
+        WindowsUtils._wait_for_nic(interface_name)
 
     @staticmethod
     def _set_interface_dns(interface_name, dnsnameservers):
@@ -966,6 +982,7 @@ class WindowsUtils(base.BaseOSUtils):
         raise exception.ItemNotFoundException(
             "No network team manager available")
 
+    @retry_decorator()
     def create_network_team(self, team_name, mode, load_balancing_algorithm,
                             members, mac_address, primary_nic_name=None,
                             primary_nic_vlan_id=None, lacp_timer=None):
