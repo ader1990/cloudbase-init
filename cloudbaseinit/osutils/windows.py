@@ -757,23 +757,32 @@ class WindowsUtils(base.BaseOSUtils):
 
         return iface_index_list[0]["friendly_name"]
 
+    def _exec_with_retry(self, action):
+        i = 0
+        while True:
+            try:
+                return action()
+            except Exception:
+                if i < 10:
+                    i += 1
+                    time.sleep(1)
+                else:
+                    raise
+
     def set_network_adapter_mtu(self, name, mtu):
+        self._exec_with_retry(lambda: self._set_network_adapter_mtu(name, mtu))
+
+    def _set_network_adapter_mtu(self, name, mtu):
         if not self.check_os_version(6, 0):
             raise exception.CloudbaseInitException(
                 'Setting the MTU is currently not supported on Windows XP '
                 'and Windows Server 2003')
 
-        iface_index_list = [
-            net_addr["interface_index"] for net_addr
-            in network.get_adapter_addresses()
-            if net_addr["friendly_name"] == name]
+        WindowsUtils._wait_for_nic(name)
+        LOG.debug('Setting MTU for interface %(name)', {name: name})
 
-        if not iface_index_list:
-            raise exception.ItemNotFoundException(
-                'Network interface with name "%s" not found' %
-                name)
-        else:
-            iface_index = iface_index_list[0]
+        if True:
+            iface_index = name
 
             LOG.debug('Setting MTU for interface "%(name)s" with '
                       'value "%(mtu)s"',
@@ -789,7 +798,7 @@ class WindowsUtils(base.BaseOSUtils):
             if ret_val:
                 raise exception.CloudbaseInitException(
                     'Setting MTU for interface "%(name)s" with '
-                    'value "%(mtu)s" failed' % {'name': name, 'mtu': mtu})
+                    'value "%(mtu)s" failed with error "%(err)s" with out "%(out)s" with retval "%(ret_val)s"' % {'name': name, 'mtu': mtu, 'out': out, 'err': err, 'ret_val': ret_val})
 
     def rename_network_adapter(self, old_name, new_name):
         base_dir = self._get_system_dir()
@@ -988,6 +997,13 @@ class WindowsUtils(base.BaseOSUtils):
             "No network team manager available")
 
     def create_network_team(self, team_name, mode, load_balancing_algorithm,
+                            members, mac_address, primary_nic_name=None,
+                            primary_nic_vlan_id=None, lacp_timer=None):
+        self._exec_with_retry(lambda: self._create_network_team(
+            team_name, mode, load_balancing_algorithm, members, mac_address,
+            primary_nic_name, primary_nic_vlan_id, lacp_timer))
+
+    def _create_network_team(self, team_name, mode, load_balancing_algorithm,
                             members, mac_address, primary_nic_name=None,
                             primary_nic_vlan_id=None, lacp_timer=None):
         self._get_network_team_manager().create_team(
