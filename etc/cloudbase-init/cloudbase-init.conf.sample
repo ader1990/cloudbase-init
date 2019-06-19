@@ -5,11 +5,11 @@
 #
 
 # Allows OS reboots requested by plugins (boolean value)
-#allow_reboot = true
+allow_reboot = false
 
 # In case of execution as a service, specifies if the service must be gracefully
 # stopped before exiting (boolean value)
-#stop_service_on_exit = true
+stop_service_on_exit = false
 
 # Check if there is a newer version of cloudbase-init available.  If this option
 # is activated, a log message  will be  emitted if there is a newer version
@@ -134,9 +134,7 @@ metadata_services = cloudbaseinit.metadata.services.configdrive.ConfigDriveServi
 
 # List of enabled plugin classes, to be executed in the provided order (list
 # value)
-plugins = cloudbaseinit.plugins.common.mtu.MTUPlugin
-
-#,cloudbaseinit.plugins.windows.ntpclient.NTPClientPlugin,cloudbaseinit.plugins.common.sethostname.SetHostNamePlugin,cloudbaseinit.plugins.windows.createuser.CreateUserPlugin,cloudbaseinit.plugins.common.networkconfig.NetworkConfigPlugin,cloudbaseinit.plugins.windows.licensing.WindowsLicensingPlugin,cloudbaseinit.plugins.common.sshpublickeys.SetUserSSHPublicKeysPlugin,cloudbaseinit.plugins.windows.extendvolumes.ExtendVolumesPlugin,cloudbaseinit.plugins.common.userdata.UserDataPlugin,cloudbaseinit.plugins.common.setuserpassword.SetUserPasswordPlugin,cloudbaseinit.plugins.windows.winrmlistener.ConfigWinRMListenerPlugin,cloudbaseinit.plugins.windows.winrmcertificateauth.ConfigWinRMCertificateAuthPlugin,cloudbaseinit.plugins.common.localscripts.LocalScriptsPlugin
+plugins = cloudbaseinit.plugins.common.mtu.MTUPlugin,cloudbaseinit.plugins.windows.ntpclient.NTPClientPlugin,cloudbaseinit.plugins.common.sethostname.SetHostNamePlugin,cloudbaseinit.plugins.windows.createuser.CreateUserPlugin,cloudbaseinit.plugins.common.networkconfig.NetworkConfigPlugin,cloudbaseinit.plugins.windows.licensing.WindowsLicensingPlugin,cloudbaseinit.plugins.common.sshpublickeys.SetUserSSHPublicKeysPlugin,cloudbaseinit.plugins.windows.extendvolumes.ExtendVolumesPlugin,cloudbaseinit.plugins.common.userdata.UserDataPlugin,cloudbaseinit.plugins.common.setuserpassword.SetUserPasswordPlugin,cloudbaseinit.plugins.windows.winrmlistener.ConfigWinRMListenerPlugin,cloudbaseinit.plugins.windows.winrmcertificateauth.ConfigWinRMCertificateAuthPlugin,cloudbaseinit.plugins.common.localscripts.LocalScriptsPlugin
 
 # List of enabled userdata content plugins (list value)
 #user_data_plugins = cloudbaseinit.plugins.common.userdataplugins.parthandler.PartHandlerPlugin,cloudbaseinit.plugins.common.userdataplugins.cloudconfig.CloudConfigPlugin,cloudbaseinit.plugins.common.userdataplugins.cloudboothook.CloudBootHookPlugin,cloudbaseinit.plugins.common.userdataplugins.shellscript.ShellScriptPlugin,cloudbaseinit.plugins.common.userdataplugins.multipartmixed.MultipartMixedPlugin,cloudbaseinit.plugins.common.userdataplugins.heat.HeatPlugin

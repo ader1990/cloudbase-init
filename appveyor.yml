@@ -13,7 +13,9 @@ install:
   - "%CMD_IN_ENV% python -m pip install -U PyMI"
 
 test_script:
+  - "powershell.exe Mount-DiskImage -ImagePath (Resolve-Path .\liberty-disk-config.iso)"
+  - "powershell.exe Get-PSDrive)"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r test-requirements.txt"
   - "%CMD_IN_ENV% pip install ."
-  - "%CMD_IN_ENV% cloudbase-init.exe --config-file ./etc/cloudbase-init/cloudbase-init.conf.sample"
+  - "%CMD_IN_ENV% cloudbase-init.exe --noreset_service_password --config-file ./etc/cloudbase-init/cloudbase-init.conf.sample"
