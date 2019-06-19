@@ -14,7 +14,7 @@ install:
 
 test_script:
   - "powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./liberty-disk-config.iso)"
-  - "powershell.exe Get-PSDrive)"
+  - "powershell.exe Get-PSDrive"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r test-requirements.txt"
   - "%CMD_IN_ENV% pip install ."
