@@ -11,14 +11,9 @@ install:
   - "python --version"
   - "%CMD_IN_ENV% python -m pip install -U pip"
   - "%CMD_IN_ENV% python -m pip install -U PyMI"
-  - "%CMD_IN_ENV% python -m pip install -U nose"
-  - "%CMD_IN_ENV% python -m pip install -U iniparse"
 
 test_script:
-  - "powershell.exe wget https://raw.githubusercontent.com/ader1990/crudini/master/crudini -UseBasicParsing -OutFile ./crudini.py"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r test-requirements.txt"
   - "%CMD_IN_ENV% pip install ."
-  - "%CMD_IN_ENV% oslo-config-generator --config-file ./etc/cloudbase-init/cloudbase-init-config-generator.conf"
-  - "%CMD_IN_ENV% python ./crudini.py --set ./etc/cloudbase-init/cloudbase-init.conf.sample DEFAULT metadata_services cloudbaseinit.metadata.services.configdrive.ConfigDriveService"
   - "%CMD_IN_ENV% cloudbase-init.exe --config-file ./etc/cloudbase-init/cloudbase-init.conf.sample"
