@@ -30,4 +30,4 @@ test_script:
   - "powershell.exe Get-PSDrive"
   - "%CMD_IN_ENV% cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf"
   - "powershell.exe cat ./cloudbase-init.log"
-  - 'powershell.exe if (cat ./cloudbase-init.log | Where-Object { $_ -like "*exception*" }) { exit 1 }'
+  - "powershell.exe 'if (cat ./cloudbase-init.log | Where-Object { $_ -like \"*exception*\" }) { exit 1 }'"
