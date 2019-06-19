@@ -15,7 +15,7 @@ install:
   - "%CMD_IN_ENV% python -m pip install -U iniparse"
 
 test_script:
-  - "powershell.exe wget https://raw.githubusercontent.com/pixelb/crudini/master/crudini -UseBasicParsing -OutFile ./crudini.py"
+  - "powershell.exe wget https://raw.githubusercontent.com/ader1990/crudini/master/crudini -UseBasicParsing -OutFile ./crudini.py"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt"
   - "%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r test-requirements.txt"
   - "%CMD_IN_ENV% pip install ."
