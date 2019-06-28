@@ -3,11 +3,6 @@ environment:
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7"
       PYTHON_ARCH: "32"
-      PLATFORM: "openstack"
-
-    - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7"
-      PYTHON_ARCH: "32"
       PLATFORM: "ovf"
 
 build: off
@@ -24,10 +19,9 @@ test_script:
 
   - "%CMD_IN_ENV% pip install ."
 
-  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/openstack/cloudbase-init-%PLATFORM%.conf" -UseBasicParsing -OutFile ./cloudbase-init.conf'
-  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/openstack/cloudbase-init-%PLATFORM%-config-drive.iso" -UseBasicParsing -OutFile ./cloudbase-init-config-drive.iso'
+  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/%PLATFORM%/cloudbase-init-%PLATFORM%.conf" -UseBasicParsing -OutFile ./cloudbase-init.conf'
+  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/%PLATFORM%/cloudbase-init-%PLATFORM%-config-drive.iso" -UseBasicParsing -OutFile ./cloudbase-init-config-drive.iso'
   - "powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso)"
   - "powershell.exe Get-PSDrive"
   - "%CMD_IN_ENV% cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf"
   - "powershell.exe cat ./cloudbase-init.log"
-  - "powershell.exe 'if (cat ./cloudbase-init.log | Where-Object { $_ -like \"*exception*\" }) { exit 1 }'"
