@@ -1,0 +1,29 @@
+environment:
+  matrix:
+    -
+      PYTHON: 'C:\Python27-x64'
+      PYTHON_VERSION: '2.7'
+      PYTHON_ARCH: '64'
+      PLATFORM: cloudstack
+    -
+      PYTHON: 'C:\Python36-x64'
+      PYTHON_VERSION: '3.6'
+      PYTHON_ARCH: '64'
+      PLATFORM: cloudstack
+    -
+      PYTHON: 'C:\Python36'
+      PYTHON_VERSION: '3.6'
+      PYTHON_ARCH: '32'
+      PLATFORM: cloudstack
+build: off
+install:
+  - 'SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%'
+  - '%CMD_IN_ENV% python -m pip install -U pip'
+test_script:
+  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/%PLATFORM%/cloudbase-init-%PLATFORM%.conf" -UseBasicParsing -OutFile ./cloudbase-init.conf'
+  - 'powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/%PLATFORM%/cloudbase-init-%PLATFORM%-config-drive.iso" -UseBasicParsing -OutFile ./cloudbase-init-config-drive.iso'
+  - '%CMD_IN_ENV% pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt'
+  - '%CMD_IN_ENV% pip install .'
+  - 'powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso)'
+  - ps: 'Start-Process -FilePath python.exe -ArgumentList "-m http.server" -NoNewWindow -WorkingDirectory D:\;Start-Process -FilePath python.exe -ArgumentList "-m SimpleHTTPServer" -NoNewWindow -WorkingDirectory D:\; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log'
+  - ps: 'cat ./cloudbase-init.log'
