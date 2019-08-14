@@ -174,7 +174,7 @@ class CloudStack(base.BaseHTTPMetadataService):
         for _ in range(CONF.retry_count):
             try:
                 content = self._password_client(headers=headers).strip()
-            except http_client.HTTPConnection as exc:
+            except (http_client.HTTPException, ConnectionError) as exc:
                 LOG.error("Getting password failed: %s", exc)
                 continue
 
