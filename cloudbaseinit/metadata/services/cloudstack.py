@@ -175,12 +175,12 @@ class CloudStack(base.BaseHTTPMetadataService):
             try:
                 content = self._password_client(headers=headers).strip()
             except http_client.HTTPException as exc:
-                LOG.error("Getting password failed: %s", exc)
+                LOG.debug("Getting password failed: %s", exc)
                 continue
             except Exception as exc:
                 if exc.errno == 10061:
                     # Connection error
-                    LOG.error("Getting password failed: %s", exc.strerror)
+                    LOG.debug("Getting password failed: %s", exc.strerror)
                     continue
                 else:
                     raise
@@ -191,7 +191,7 @@ class CloudStack(base.BaseHTTPMetadataService):
                 continue
 
             if content == BAD_REQUEST:
-                LOG.error("The Password Server did not recognize the "
+                LOG.debug("The Password Server did not recognize the "
                           "request.")
                 break
 
