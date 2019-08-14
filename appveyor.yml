@@ -27,3 +27,4 @@ test_script:
   - 'powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso)'
   - ps: 'Start-Process -FilePath python.exe -ArgumentList "-m http.server" -NoNewWindow -WorkingDirectory D:\;Start-Process -FilePath python.exe -ArgumentList "-m SimpleHTTPServer" -NoNewWindow -WorkingDirectory D:\; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log'
   - ps: 'cat ./cloudbase-init.log'
+  - ps: '$errors = $(cat ./cloudbase-init.log | Where-Object {$_ -like "*error*"}); if ($errors) { Write-Host "The following errors have been found in cloudbase-init logs: ${errors}"; exit 1; } else { Write-Host "No errors have been found in cloudbase-init logs."}'
