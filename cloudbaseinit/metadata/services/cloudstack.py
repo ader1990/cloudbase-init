@@ -174,9 +174,16 @@ class CloudStack(base.BaseHTTPMetadataService):
         for _ in range(CONF.retry_count):
             try:
                 content = self._password_client(headers=headers).strip()
-            except (http_client.HTTPException, ConnectionError) as exc:
+            except http_client.HTTPException as exc:
                 LOG.error("Getting password failed: %s", exc)
                 continue
+            except Exception as exc:
+                if exc.errno == 10061:
+                    # Connection error
+                    LOG.error("Getting password failed: %s", exc.strerror)
+                    continue
+                else:
+                    raise
 
             if not content:
                 LOG.warning("The Password Server did not have any "
