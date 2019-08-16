@@ -1,0 +1,36 @@
+name: Cloudbase-Init functional test
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6]
+        cloud: [openstack]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt
+        pip install .
+    - name: Download external dependencies
+      run: |
+        powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/${{ matrix.cloud }}/cloudbase-init-${{ matrix.cloud }}.conf" -UseBasicParsing -OutFile ./cloudbase-init.conf
+        powershell.exe Invoke-WebRequest "https://raw.githubusercontent.com/ader1990/cloudbase-init-test-resources/master/%${{ matrix.cloud }}/cloudbase-init-${{ matrix.cloud }}-config-drive.iso" -UseBasicParsing -OutFile ./cloudbase-init-config-drive.iso
+    - name: Run test
+      run: |
+        powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso)
+        powershell Get-PSDrive
+        powershell Start-Process -FilePath python.exe -ArgumentList "-m http.server" -NoNewWindow -WorkingDirectory D:\;Start-Process -FilePath python.exe -ArgumentList "-m SimpleHTTPServer" -NoNewWindow -WorkingDirectory D:\; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
+        powershell cat ./cloudbase-init.log
+        powershell $errors = $(cat ./cloudbase-init.log | Where-Object {$_ -like "*error*"}); if ($errors) { Write-Host "The following errors have been found in cloudbase-init logs: ${errors}"; exit 1; } else { Write-Host "No errors have been found in cloudbase-init logs."}
