@@ -10,7 +10,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.6]
-        cloud: [openstack,cloudstack,ovf]
+        cloud: [openstack,cloudstack,ovf,openstack-http]
 
     steps:
     - uses: actions/checkout@v1
