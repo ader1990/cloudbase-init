@@ -10,7 +10,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.6]
-        cloud: [ovf,cloudstack,openstack]
+        cloud: [cloudstack]
 
     steps:
     - uses: actions/checkout@v1
@@ -30,7 +30,6 @@ jobs:
     - name: Run test
       run: |
         powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso)
-        powershell Get-PSDrive
-        powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory E:\;Start-Process -FilePath python.exe -ArgumentList """-m SimpleHTTPServer""" -NoNewWindow -WorkingDirectory E:\; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
+        powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory E:\;cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
         powershell cat ./cloudbase-init.log
         powershell $errors = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*error*"""}); if ($errors) { exit 1; }
