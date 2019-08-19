@@ -83,6 +83,7 @@ class CloudStack(base.BaseHTTPMetadataService):
     def load(self):
         """Obtain all the required information."""
         super(CloudStack, self).load()
+
         if self._test_api(CONF.cloudstack.metadata_base_url):
             return True
 
@@ -168,9 +169,16 @@ class CloudStack(base.BaseHTTPMetadataService):
         for _ in range(CONF.retry_count):
             try:
                 content = self._password_client(headers=headers).strip()
-            except http_client.HTTPConnection as exc:
-                LOG.error("Getting password failed: %s", exc)
+            except http_client.HTTPException as exc:
+                LOG.debug("Getting password failed: %s", exc)
                 continue
+            except Exception as exc:
+                if exc.errno == 10061:
+                    # Connection error
+                    LOG.debug("Getting password failed: %s", exc.strerror)
+                    continue
+                else:
+                    raise
 
             if not content:
                 LOG.warning("The Password Server did not have any "
@@ -178,7 +186,7 @@ class CloudStack(base.BaseHTTPMetadataService):
                 continue
 
             if content == BAD_REQUEST:
-                LOG.error("The Password Server did not recognize the "
+                LOG.debug("The Password Server did not recognize the "
                           "request.")
                 break
 
