@@ -13,7 +13,6 @@
 #    under the License.
 
 import sys
-import time
 
 import mi
 from oslo_log import log as oslo_logging
@@ -23,6 +22,7 @@ from cloudbaseinit import exception
 from cloudbaseinit.models import network as network_model
 from cloudbaseinit.osutils import factory as osutils_factory
 from cloudbaseinit.utils import network_team
+from cloudbaseinit.utils import retry_decorator
 
 LBFO_TEAM_MODE_STATIC = 0
 LBFO_TEAM_MODE_SWITCH_INDEPENDENT = 1
@@ -107,6 +107,11 @@ class NetLBFOTeamManager(network_team.BaseNetworkTeamManager):
                     primary_nic_vlan_id=None, lacp_timer=None):
         conn = wmi.WMI(moniker='root/standardcimv2')
 
+        # NOTE(avladu): If the bond mode is SwitchIndependent, the primary
+        # network adapter MAC = the bond NIC MAC = the bond VLANs NICs.
+        # The primary NIC is chosen by the bonding software. As a consequence,
+        # it can change on reboots or on members NICs enable / disable actions.
+        # https://docs.microsoft.com/en-us/windows-server/networking/technologies/nic-teaming/nic-teaming-mac-address-use-and-management
         primary_adapter_name = self._get_primary_adapter_name(
             members, mac_address)
 
@@ -158,30 +163,19 @@ class NetLBFOTeamManager(network_team.BaseNetworkTeamManager):
                 self._set_primary_nic_vlan_id(
                     conn, team_name, primary_nic_vlan_id)
 
-            if primary_nic_name != team_name or primary_nic_vlan_id is None:
-                # TODO(alexpilotti): query the new nic name
-                # When the nic name equals the bond name and a VLAN ID is set,
-                # the nick name is changed.
-                self._wait_for_nic(nic_name)
+            nic_name = conn.MSFT_NetLbfoTeamNic(team=team_name)[0].Name
+            self._wait_for_nic(nic_name)
         except Exception as ex:
             self.delete_team(team_name)
             raise ex
 
     @staticmethod
+    @retry_decorator.retry_decorator(max_retry_count=15)
     def _wait_for_nic(nic_name):
         conn = wmi.WMI(moniker='//./root/cimv2')
-        max_count = 100
-        i = 0
-        while True:
-            if len(conn.Win32_NetworkAdapter(NetConnectionID=nic_name)):
-                break
-            else:
-                i += 1
-                if i >= max_count:
-                    raise exception.ItemNotFoundException(
-                        "Cannot find team NIC: %s" % nic_name)
-                LOG.debug("Waiting for team NIC: %s", nic_name)
-                time.sleep(1)
+        if not len(conn.Win32_NetworkAdapter(NetConnectionID=nic_name)):
+            raise exception.ItemNotFoundException(
+                "Cannot find NIC: %s" % nic_name)
 
     def add_team_nic(self, team_name, nic_name, vlan_id):
         conn = wmi.WMI(moniker='root/standardcimv2')

@@ -58,6 +58,9 @@ class NetLBFOTest(unittest.TestCase):
         conn = self._wmi_mock.WMI.return_value
         mock_team = mock.Mock()
         conn.MSFT_NetLbfoTeam.new.return_value = mock_team
+        mock_team_nic = mock.Mock()
+        mock_team_nic.Name = mock.Mock()
+        conn.MSFT_NetLbfoTeamNic.return_value = [mock_team_nic]
 
         if mode_not_found:
             mode = "fake mode"
@@ -120,7 +123,7 @@ class NetLBFOTest(unittest.TestCase):
                 conn, mock.sentinel.team_name, mock.sentinel.vlan_id)
 
             mock_wait_for_nic.assert_called_once_with(
-                mock.sentinel.pri_nic_name)
+                mock_team_nic.Name)
         else:
             mock_delete_team.assert_called_once_with(mock.sentinel.team_name)
 
@@ -171,20 +174,6 @@ class NetLBFOTest(unittest.TestCase):
         with mock.patch('sys.platform', 'win32'):
             self.assertEqual(
                 True, self._netlbfo.NetLBFOTeamManager.is_available())
-
-    @mock.patch('time.sleep')
-    def test_wait_for_nic(self, mock_sleep):
-        conn = self._wmi_mock.WMI.return_value
-        conn.Win32_NetworkAdapter.side_effect = [
-            [], [mock.sentinel.net_adapter]]
-
-        self._netlbfo.NetLBFOTeamManager()._wait_for_nic(
-            mock.sentinel.nic_name)
-
-        conn.Win32_NetworkAdapter.assert_has_calls([
-            mock.call(NetConnectionID=mock.sentinel.nic_name),
-            mock.call(NetConnectionID=mock.sentinel.nic_name)])
-        mock_sleep.assert_called_once_with(1)
 
     def test_set_primary_nic_vlan_id(self):
         conn = mock.Mock()

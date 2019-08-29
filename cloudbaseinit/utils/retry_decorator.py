@@ -22,7 +22,7 @@ LOG = logging.getLogger(__name__)
 
 
 def retry_decorator(max_retry_count=5, timeout=None, inc_sleep_time=1,
-                    max_sleep_time=1, exceptions=()):
+                    max_sleep_time=1, exceptions=Exception):
     """Retries invoking the decorated method in case of expected exceptions.
 
     :param max_retry_count: The maximum number of retries performed. If 0, no
@@ -33,7 +33,7 @@ def retry_decorator(max_retry_count=5, timeout=None, inc_sleep_time=1,
     :param inc_sleep_time: The time sleep increment used between retries.
     :param max_sleep_time: The maximum time to wait between retries.
     :param exceptions: A list of expected exceptions for which retries will be
-                       performed.
+                       performed. If None, any exception will be retried.
     """
 
     def wrapper(f):
