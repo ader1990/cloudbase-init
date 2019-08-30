@@ -1,0 +1,41 @@
+name: Cloudbase-Init functional tests (openstack/config-drive/maas/ovf)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 100
+      matrix:
+        python-version: [3.6]
+        cloud: [openstack-http, openstack, maas, ovf]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Download external dependencies
+      shell: powershell
+      run: |
+        git clone "https://github.com/cloudbase/cloudbase-init-test-resources";
+        cd "cloudbase-init-test-resources/${{ matrix.cloud }}";
+        try {& "../bin/mkisofs.exe" -o "../../cloudbase-init-config-drive.iso" -ignore-error -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"} catch {}
+    - name: Install local dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -c https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt -U --force-reinstall -r requirements.txt
+        pip install .
+    - name: Run Cloudbase-Init
+      run: |
+        powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso) ^| Out-Null
+        powershell.exe winrm.cmd quickconfig -force -q ^| Out-Null
+        powershell.exe mkdir """./metadata""" ^| Out-Null; cp -recurse -force """E:\*""" """./metadata"""
+        powershell.exe (Get-Content """.\metadata\openstack\latest\network_data.json.template""").Replace("""REPLACE_MAC_ADDRESS""", ((Get-NetAdapter Ethernet).macaddress).Replace("""-""",""":"""))^|Set-Content """.\metadata\openstack\latest\network_data.json""" -Encoding Ascii
+        powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory (Resolve-Path("""./metadata""")) 2>&1 >> http_server.log;
+        powershell.exe cd "cloudbase-init-test-resources/${{ matrix.cloud }}/"; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
+        powershell cat ./cloudbase-init.log
+        powershell $errors = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*error*"""}); $pluginExecution = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*Plugins execution done*"""}); if ($errors -or !$pluginExecution) { exit 1; }
