@@ -896,7 +896,7 @@ class WindowsUtils(base.BaseOSUtils):
         else:
             adapter.Disable()
 
-    def _set_static_network_config(self, name, address, prefix_len, gateway):
+    def _set_static_network_config(self, name, address, netmask, gateway):
         if netaddr.valid_ipv6(address):
             family = AF_INET6
             family_stringified = "ipv6"
@@ -909,54 +909,24 @@ class WindowsUtils(base.BaseOSUtils):
         # Dhcp Enabled"
         WindowsUtils._fix_network_adapter_dhcp(name, False, family)
 
-        conn = wmi.WMI(moniker='//./root/standardcimv2')
-        existing_addresses = conn.MSFT_NetIPAddress(
-            AddressFamily=family, InterfaceAlias=name)
-        for existing_address in existing_addresses:
+        args = ["interface", family_stringified, "set", "address",
+                "name=%s" % name, "static", "address=%s" % address,
+                "mask=%s" % netmask, "gateway=%s" % gateway]
+        (out, err, ret_val) = self.run_netsh(args)
+        if ret_val:
             LOG.debug(
-                "Removing existing IP address \"%(ip)s\" "
-                "from adapter \"%(name)s\"",
-                {"ip": existing_address.IPAddress, "name": name})
-            args = ["interface", family_stringified, "delete", "address",
-                    str(name), 'addr=%s' % str(existing_address.IPAddress)]
-            (out, err, ret_val) = self.run_netsh(args)
-            if ret_val:
-                LOG.debug(
-                    'Failed to remove address using netsh. Error code: %d '
-                    'and error output: %s %s' % (ret_val, out, err))
-                existing_address.Delete_()
-
-        existing_routes = conn.MSFT_NetRoute(
-            AddressFamily=family, InterfaceAlias=name)
-        for existing_route in existing_routes:
-            LOG.debug(
-                "Removing existing route \"%(route)s\" "
-                "from adapter \"%(name)s\"",
-                {"route": existing_route.DestinationPrefix, "name": name})
-
-            args = ["interface", family_stringified, "delete", "route",
-                    str(existing_route.DestinationPrefix), name]
-            (out, err, ret_val) = self.run_netsh(args)
-            if ret_val:
-                LOG.debug(
-                    'Failed to remove route using netsh. Error code: %d '
-                    'and error output: %s %s' % (ret_val, out, err))
-                existing_route.Delete_()
-
-        conn.MSFT_NetIPAddress.create(
-            AddressFamily=family, InterfaceAlias=name, IPAddress=address,
-            PrefixLength=prefix_len, DefaultGateway=gateway)
+                'Failed to set static network config using netsh. Error code: %d '
+                'and error output: %s %s' % (ret_val, out, err))
 
     def set_static_network_config(self, name, address, prefix_len_or_netmask,
                                   gateway, dnsnameservers):
         ip_network = netaddr.IPNetwork(
             u"%s/%s" % (address, prefix_len_or_netmask))
-        prefix_len = ip_network.prefixlen
         netmask = str(ip_network.netmask)
 
         if self.check_os_version(6, 2):
             self._set_static_network_config(
-                name, address, prefix_len, gateway)
+                name, address, netmask, gateway)
             if len(dnsnameservers):
                 self._set_interface_dns(name, dnsnameservers)
         else:
