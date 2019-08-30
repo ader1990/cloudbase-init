@@ -30,7 +30,10 @@ jobs:
     - name: Run Cloudbase-Init
       run: |
         powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso); Get-PSDrive
+        powershell.exe ipconfig.exe /all
+        powershell.exe winrm.cmd quickconfig -force -q
         powershell.exe mkdir """./metadata"""; cp -recurse -force """E:\*""" """./metadata"""
+        powershell.exe (Get-Content """.\metadata\openstack\latest\network_data.json.template""").Replace("""REPLACE_MAC_ADDRESS""", ((Get-NetAdapter Ethernet).macaddress).Replace("""-""",""":"""))^|Set-Content """.\metadata\openstack\latest\network_data.json""" -Encoding Ascii
         powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory (Resolve-Path("""./metadata""")) 2>&1 >> http_server.log;
         cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
         powershell cat ./cloudbase-init.log

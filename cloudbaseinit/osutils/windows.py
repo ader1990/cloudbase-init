@@ -757,6 +757,13 @@ class WindowsUtils(base.BaseOSUtils):
 
         return iface_index_list[0]["friendly_name"]
 
+    def run_netsh(self, netsh_args):
+        base_dir = self._get_system_dir()
+        netsh_path = os.path.join(base_dir, 'netsh.exe')
+
+        args = [netsh_path] + netsh_args
+        return self.execute_process(args, shell=False)
+
     def set_network_adapter_mtu(self, name, mtu):
         if not self.check_os_version(6, 0):
             raise exception.CloudbaseInitException(
@@ -779,25 +786,19 @@ class WindowsUtils(base.BaseOSUtils):
                       'value "%(mtu)s"',
                       {'name': name, 'mtu': mtu})
 
-            base_dir = self._get_system_dir()
-            netsh_path = os.path.join(base_dir, 'netsh.exe')
-
-            args = [netsh_path, "interface", "ipv4", "set", "subinterface",
+            args = ["interface", "ipv4", "set", "subinterface",
                     str(iface_index), "mtu=%s" % mtu,
                     "store=persistent"]
-            (out, err, ret_val) = self.execute_process(args, shell=False)
+            (out, err, ret_val) = self.run_netsh(args)
             if ret_val:
                 raise exception.CloudbaseInitException(
                     'Setting MTU for interface "%(name)s" with '
                     'value "%(mtu)s" failed' % {'name': name, 'mtu': mtu})
 
     def rename_network_adapter(self, old_name, new_name):
-        base_dir = self._get_system_dir()
-        netsh_path = os.path.join(base_dir, 'netsh.exe')
-
-        args = [netsh_path, "interface", "set", "interface",
+        args = ["interface", "set", "interface",
                 'name=%s' % old_name, 'newname=%s' % new_name]
-        (out, err, ret_val) = self.execute_process(args, shell=False)
+        (out, err, ret_val) = self.run_netsh(args)
         if ret_val:
             raise exception.CloudbaseInitException(
                 'Renaming interface "%(old_name)s" to "%(new_name)s" '
@@ -895,12 +896,13 @@ class WindowsUtils(base.BaseOSUtils):
         else:
             adapter.Disable()
 
-    @staticmethod
-    def _set_static_network_config(name, address, prefix_len, gateway):
+    def _set_static_network_config(self, name, address, prefix_len, gateway):
         if netaddr.valid_ipv6(address):
             family = AF_INET6
+            family_stringified = "ipv6"
         else:
             family = AF_INET
+            family_stringified = "ipv4"
 
         # This is needed to avoid the error:
         # "Inconsistent parameters PolicyStore PersistentStore and
@@ -915,7 +917,14 @@ class WindowsUtils(base.BaseOSUtils):
                 "Removing existing IP address \"%(ip)s\" "
                 "from adapter \"%(name)s\"",
                 {"ip": existing_address.IPAddress, "name": name})
-            existing_address.Delete_()
+            args = ["interface", family_stringified, "delete", "address",
+                    str(name), 'addr=%s' % str(existing_address.IPAddress)]
+            (out, err, ret_val) = self.run_netsh(args)
+            if ret_val:
+                LOG.debug(
+                    'Failed to remove address using netsh. Error code: %d '
+                    'and error output: %s %s' % (ret_val, out, err))
+                existing_address.Delete_()
 
         existing_routes = conn.MSFT_NetRoute(
             AddressFamily=family, InterfaceAlias=name)
@@ -924,7 +933,15 @@ class WindowsUtils(base.BaseOSUtils):
                 "Removing existing route \"%(route)s\" "
                 "from adapter \"%(name)s\"",
                 {"route": existing_route.DestinationPrefix, "name": name})
-            existing_route.Delete_()
+
+            args = ["interface", family_stringified, "delete", "route",
+                    str(existing_route.DestinationPrefix), name]
+            (out, err, ret_val) = self.run_netsh(args)
+            if ret_val:
+                LOG.debug(
+                    'Failed to remove route using netsh. Error code: %d '
+                    'and error output: %s %s' % (ret_val, out, err))
+                existing_route.Delete_()
 
         conn.MSFT_NetIPAddress.create(
             AddressFamily=family, InterfaceAlias=name, IPAddress=address,
