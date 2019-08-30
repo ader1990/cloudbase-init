@@ -10,7 +10,7 @@ jobs:
       max-parallel: 100
       matrix:
         python-version: [3.6]
-        cloud: [openstack,openstack-http,cloudstack,ovf,maas]
+        cloud: [openstack-http]
 
     steps:
     - uses: actions/checkout@v1
@@ -30,7 +30,8 @@ jobs:
     - name: Run Cloudbase-Init
       run: |
         powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso); Get-PSDrive
-        powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory E:\ 2>&1 >> http_server.log;
+        powershell.exe mkdir """./metadata"""; cp -recurse -force """E:\*""" """./metadata"""
+        powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory (Resolve-Path("""./metadata""")) 2>&1 >> http_server.log;
         cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
         powershell cat ./cloudbase-init.log
         powershell $errors = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*error*"""}); $pluginExecution = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*Plugins execution done*"""}); if ($errors -or !$pluginExecution) { exit 1; }
