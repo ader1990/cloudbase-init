@@ -21,7 +21,7 @@ jobs:
     - name: Download external dependencies
       shell: powershell
       run: |
-        git clone "https://github.com/ader1990/cloudbase-init-test-resources-1"; Get-ChildItem Get-ChildItem env:;
+        git clone "https://github.com/ader1990/cloudbase-init-test-resources-1"; Get-ChildItem env:;
         cd "cloudbase-init-test-resources-1/${{ matrix.python-version }}";
         & "../bin/mkisofs.exe" -o "../cloudbase-init-config-drive.iso" -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"
     - name: Install local dependencies
