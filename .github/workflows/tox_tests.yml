@@ -16,6 +16,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        pip install tox
     - name: Run tox for Python 2.7
       run: |
         tox -epy27 -vv
@@ -33,6 +36,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        pip install tox
     - name: Run tox for Python 3.6
       run: |
         tox -epy36 -vv
@@ -50,6 +56,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        pip install tox
     - name: Run tox pep8
       run: |
         tox -epep8 -vv
@@ -67,6 +76,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        pip install tox
     - name: Run tox docs
       run: |
         tox -edocs -vv
@@ -84,6 +96,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: |
+        pip install tox
     - name: Run tox coverage tests
       run: |
         tox -ecover -vv
