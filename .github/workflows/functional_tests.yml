@@ -23,7 +23,7 @@ jobs:
       run: |
         git clone "https://github.com/ader1990/cloudbase-init-test-resources-1"; Get-ChildItem env:;
         cd "cloudbase-init-test-resources-1/${{ matrix.cloud }}";
-        & "../bin/mkisofs.exe" -o "../cloudbase-init-config-drive.iso" -ignore-error -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"
+        try {& "../bin/mkisofs.exe" -o "../cloudbase-init-config-drive.iso" -ignore-error -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"} catch {}
     - name: Install local dependencies
       run: |
         python -m pip install --upgrade pip
