@@ -1,4 +1,4 @@
-name: Cloudbase-Init functional test
+name: Cloudbase-Init functional tests
 
 on: [push]
 
@@ -10,7 +10,7 @@ jobs:
       max-parallel: 100
       matrix:
         python-version: [3.6]
-        cloud: [openstack-http]
+        cloud: [openstack-http, openstack, maas, ovf]
 
     steps:
     - uses: actions/checkout@v1
@@ -21,8 +21,8 @@ jobs:
     - name: Download external dependencies
       shell: powershell
       run: |
-        git clone "https://github.com/ader1990/cloudbase-init-test-resources-1";
-        cd "cloudbase-init-test-resources-1/${{ matrix.cloud }}";
+        git clone "https://github.com/cloudbase/cloudbase-init-test-resources";
+        cd "cloudbase-init-test-resources/${{ matrix.cloud }}";
         try {& "../bin/mkisofs.exe" -o "../../cloudbase-init-config-drive.iso" -ignore-error -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"} catch {}
     - name: Install local dependencies
       run: |
@@ -36,6 +36,6 @@ jobs:
         powershell.exe mkdir """./metadata""" ^| Out-Null; cp -recurse -force """E:\*""" """./metadata"""
         powershell.exe (Get-Content """.\metadata\openstack\latest\network_data.json.template""").Replace("""REPLACE_MAC_ADDRESS""", ((Get-NetAdapter Ethernet).macaddress).Replace("""-""",""":"""))^|Set-Content """.\metadata\openstack\latest\network_data.json""" -Encoding Ascii
         powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory (Resolve-Path("""./metadata""")) 2>&1 >> http_server.log;
-        powershell.exe cd "cloudbase-init-test-resources-1/${{ matrix.cloud }}/"; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
+        powershell.exe cd "cloudbase-init-test-resources/${{ matrix.cloud }}/"; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
         powershell cat ./cloudbase-init.log
         powershell $errors = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*error*"""}); $pluginExecution = $(cat ./cloudbase-init.log ^| Where-Object {$_ -like """*Plugins execution done*"""}); if ($errors -or !$pluginExecution) { exit 1; }
