@@ -21,7 +21,7 @@ jobs:
     - name: Download external dependencies
       shell: powershell
       run: |
-        git clone "https://github.com/ader1990/cloudbase-init-test-resources-1"; Get-ChildItem env:;
+        git clone "https://github.com/ader1990/cloudbase-init-test-resources-1";
         cd "cloudbase-init-test-resources-1/${{ matrix.cloud }}";
         try {& "../bin/mkisofs.exe" -o "../../cloudbase-init-config-drive.iso" -ignore-error -ldots -allow-lowercase -allow-multidot -l -publisher "cbsl" -quiet -J -r -V "config-2" "cloudbase-init-metadata"} catch {}
     - name: Install local dependencies
@@ -31,10 +31,9 @@ jobs:
         pip install .
     - name: Run Cloudbase-Init
       run: |
-        powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso); Get-PSDrive
-        powershell.exe ipconfig.exe /all
-        powershell.exe winrm.cmd quickconfig -force -q
-        powershell.exe mkdir """./metadata"""; cp -recurse -force """E:\*""" """./metadata"""
+        powershell.exe Mount-DiskImage -ImagePath (Resolve-Path ./cloudbase-init-config-drive.iso) ^| Out-Null
+        powershell.exe winrm.cmd quickconfig -force -q ^| Out-Null
+        powershell.exe mkdir """./metadata""" ^| Out-Null; cp -recurse -force """E:\*""" """./metadata"""
         powershell.exe (Get-Content """.\metadata\openstack\latest\network_data.json.template""").Replace("""REPLACE_MAC_ADDRESS""", ((Get-NetAdapter Ethernet).macaddress).Replace("""-""",""":"""))^|Set-Content """.\metadata\openstack\latest\network_data.json""" -Encoding Ascii
         powershell Start-Process -FilePath python.exe -ArgumentList """-m http.server""" -NoNewWindow -WorkingDirectory (Resolve-Path("""./metadata""")) 2>&1 >> http_server.log;
         powershell.exe cd "cloudbase-init-test-resources-1/${{ matrix.cloud }}/"; cloudbase-init.exe --noreset_service_password --config-file ./cloudbase-init.conf 2>&1 >> cloudbase-init.log
