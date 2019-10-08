@@ -1,0 +1,90 @@
+name: Cloudbase-Init unit tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 100
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [2.7]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run tox for Python 2.7
+      run: |
+        tox -epy27 -vv
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 100
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run tox for Python 3.6
+      run: |
+        tox -epy36 -vv
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 100
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run tox pep8
+      run: |
+        tox -epep8 -vv
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 100
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run tox docs
+      run: |
+        tox -edocs -vv
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 100
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run tox coverage tests
+      run: |
+        tox -ecover -vv
