@@ -1,6 +1,6 @@
 name: Cloudbase-Init tox tests (unit/pep8/coverage/docs)
 
-on: [push, pull]
+on: [push, pull_request]
 
 jobs:
   tox_27_tests:
