@@ -3,7 +3,7 @@ name: Cloudbase-Init unit tests
 on: [push]
 
 jobs:
-  build:
+  tox_27_tests:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 100
@@ -20,7 +20,7 @@ jobs:
       run: |
         tox -epy27 -vv
 
-  build:
+  tox_36_tests:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 100
@@ -37,14 +37,13 @@ jobs:
       run: |
         tox -epy36 -vv
 
-  build:
+  tox_36_pep8:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 100
       matrix:
         os: [ubuntu-latest]
         python-version: [3.6]
-
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python-version }}
@@ -55,7 +54,7 @@ jobs:
       run: |
         tox -epep8 -vv
 
-  build:
+  tox_36_docs:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 100
@@ -72,7 +71,7 @@ jobs:
       run: |
         tox -edocs -vv
 
-  build:
+  tox_36_coverage:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 100
