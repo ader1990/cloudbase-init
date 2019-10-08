@@ -1,4 +1,4 @@
-name: Cloudbase-Init functional tests
+name: Cloudbase-Init functional tests (openstack/config-drive/maas/ovf)
 
 on: [push, pull_request]
 
